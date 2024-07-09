@@ -30,9 +30,9 @@ pub async fn read(stream: &mut TcpStream) -> Option<req::Request> {
         .unwrap_or(0);
 
     let body = if content_len > 0 {
-        let _buf = String::from_utf8_lossy(&buf);
-        let _parts = _buf.split_once("\r\n\r\n").unwrap();
-        _parts.1.replace("\0", "").clone()
+        let buf = String::from_utf8_lossy(&buf);
+        let parts = buf.split_once("\r\n\r\n").unwrap();
+        parts.1.replace('\0', "").clone()
     } else {
         "{}".to_string()
     };
@@ -42,9 +42,7 @@ pub async fn read(stream: &mut TcpStream) -> Option<req::Request> {
         Err(_) => None,
     };
 
-    if body.is_none() {
-        return None;
-    }
+    body.as_ref()?;
 
     Some(req::Request {
         method: req.method.unwrap().to_lowercase(),

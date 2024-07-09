@@ -7,6 +7,7 @@ pub type RequestHeaders = HashMap<String, String>;
 
 // This is the data structure that will be parsed
 // from the stream and is passed to the route handlers.
+#[allow(dead_code)]
 pub struct Request {
     pub method: String,
     pub route: String,
