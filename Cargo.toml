@@ -10,6 +10,7 @@ tokio = { version = "1", features = ["full"] }
 # Tools.
 http = "1.0.0"
 httparse = "1.8.0"
+reqwest = "0.12.5"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0.193"
