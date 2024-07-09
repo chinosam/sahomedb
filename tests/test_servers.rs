@@ -1,6 +1,6 @@
 mod common;
 
-use common::*;
+use common as com;
 
 const HOST: &str = "http://127.0.0.1";
 
@@ -12,19 +12,19 @@ const CREATE_KVS: &str = r#"{
 
 #[tokio::test]
 async fn test_get_root() {
-    let (runtime, port) = run_server().await;
+    let (runtime, port) = com::run_server().await;
 
     let url = format!("{}:{}", HOST, port);
     let res = reqwest::get(url).await.unwrap();
 
     assert_eq!(res.status(), 200);
 
-    stop_server(runtime).await;
+    com::stop_server(runtime).await;
 }
 
 #[tokio::test]
 async fn test_post_kvs() {
-    let (runtime, port) = run_server().await;
+    let (runtime, port) = com::run_server().await;
 
     // Make a post request.
     let url = format!("{}:{}/kvs", HOST, port);
@@ -41,12 +41,12 @@ async fn test_post_kvs() {
     // Assert the response code.
     assert_eq!(code, 201);
 
-    stop_server(runtime).await;
+    com::stop_server(runtime).await;
 }
 
 #[tokio::test]
 async fn test_get_kvs() {
-    let (runtime, port) = run_server().await;
+    let (runtime, port) = com::run_server().await;
 
     // Get the key-value store.
     let url = format!("{}:{}/kvs/initial_key", HOST, port);
@@ -55,5 +55,5 @@ async fn test_get_kvs() {
     // Assert the response code.
     assert_eq!(res.status(), 200);
 
-    stop_server(runtime).await;
+    com::stop_server(runtime).await;
 }
