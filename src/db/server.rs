@@ -1,15 +1,21 @@
-use serde_json::{from_str, to_string};
+use http::Response;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::spawn;
 
-use super::ErrorResponse;
+type RequestHeaders = HashMap<String, String>;
 
-// Set some type aliases for convenience.
-type RequestBody = HashMap<String, String>;
+struct Request {
+    pub method: String,
+    pub route: String,
+    pub headers: RequestHeaders,
+    pub body: String,
+}
+
+// Arc and Mutex to share the key-value store
+// across threads while ensuring exclusive access.
 type KeyValue = Arc<Mutex<HashMap<String, String>>>;
 
 pub struct Server {
@@ -28,117 +34,148 @@ impl Server {
         // Bind a listner to the socket address
         let listner = TcpListener::bind(self.addr).await.unwrap();
 
-        // Accept and handle connections from clients.
         loop {
             let (stream, _) = listner.accept().await.unwrap();
             let handler = self.handle_connection(stream).await;
-            spawn(async move { handler });
+            tokio::spawn(async move { handler });
         }
     }
     async fn handle_connection(&self, mut stream: TcpStream) {
         loop {
-            // Read data from client
-            let data = self._read(&mut stream).await;
+            let req = self.read(&mut stream).await;
 
-            // when the client disconnects
-            if data.is_empty() {
+            if req.is_none() {
                 break;
             }
 
-            let json: RequestBody = from_str(&data).unwrap();
-            if json.get("command") == None {
-                let _code = "command_required";
-                let _msg = "The command key is missing.";
-                let _err = ErrorResponse::new(_code, _msg).response();
-                self._write(&mut stream, &_err).await;
-                continue;
-            }
-            // Normalize the command to lowercase.
-            let command = json.get("command").unwrap().to_lowercase();
-
-            let error = {
-                let code = "unrecognized_command";
-                let msg = format!("Unrecognized command: {}.", command);
-
-                ErrorResponse::new(code, &msg).response()
-            };
+            let req: &Request = req.as_ref().unwrap();
+            let method = req.method.clone();
+            let route = req.route.clone();
 
             // Handle the command for the response
-            let response = match command.as_str() {
-                "set" => self.handle_set(json).await,
-                "get" => self.handle_get(json).await,
-                _ => error,
+            let response = match route.as_str() {
+                "/" => self.handle_root(&method),
+                "/version" => self.handle_version(&method),
+                _ => self.get_not_found_res(),
             };
 
             // Write the data back to the client.
-            self._write(&mut stream, &response).await;
+            self.write(&mut stream, response).await;
         }
     }
 
-    async fn handle_set(&self, json: RequestBody) -> String {
-        // Validate that the key and value are present.
-        if json.get("key") == None || json.get("value") == None {
-            let _code = "key_value_required";
-            let _msg = "The key or value is missing.";
-            return ErrorResponse::new(_code, _msg).response();
+    fn handle_root(&self, method: &str) -> Response<String> {
+        match method {
+            "get" => self.get_root(),
+            _ => self.get_not_allowed_res(),
         }
+    }
 
-        // Get the key and value from the request body.
-        let key = json.get("key").unwrap().to_string();
-        let value = json.get("value").unwrap().to_string();
-        // Create a map for the response.
+    fn handle_version(&self, method: &str) -> Response<String> {
+        match method {
+            "get" => self.get_version(),
+            _ => self.get_not_allowed_res(),
+        }
+    }
+
+    // Route functions.
+    // These are the functions that handle the route functionality
+    // and is used by the handle_connection method.
+    // Use format: _<method>_<route> for naming.
+
+    fn get_root(&self) -> Response<String> {
+        // Create a HashMap to store the status.
         let mut map = HashMap::new();
-        map.insert(key.clone(), value.clone());
-        // Insert the key and value into the database.
-        self.kv.lock().unwrap().insert(key, value);
-        to_string(&map).unwrap()
+        map.insert("status", "ok");
+
+        Response::builder()
+            .status(200)
+            .body(serde_json::to_string(&map).unwrap())
+            .unwrap()
     }
 
-    async fn handle_get(&self, json: RequestBody) -> String {
-        // Validate that the key is present.
-        if json.get("key") == None {
-            let _code = "key_required";
-            let _msg = "The key is missing.";
-            return ErrorResponse::new(_code, _msg).response();
-        }
+    fn get_version(&self) -> Response<String> {
+        let ver = env!("CARGO_PKG_VERSION");
 
-        let key = json.get("key").unwrap().to_string();
-
-        // Get the value from the database.
-        let kv = self.kv.lock().unwrap();
-        let value = kv.get(&key);
-
-        // Error handling when value not found.
-        if value.is_none() {
-            let _code = "value_not_found";
-            let _msg = "No value set for this key";
-            return ErrorResponse::new(_code, _msg).response();
-        }
-
-        // Create a map for the response.
         let mut map = HashMap::new();
-        map.insert(key, value.unwrap().to_string());
+        map.insert("version", ver);
 
-        to_string(&map).unwrap()
+        Response::builder()
+            .status(200)
+            .body(serde_json::to_string(&map).unwrap())
+            .unwrap()
     }
 
-    async fn _read(&self, stream: &mut TcpStream) -> String {
+    async fn read(&self, stream: &mut TcpStream) -> Option<Request> {
+        let mut _headers = [httparse::EMPTY_HEADER; 16];
+        let mut req = httparse::Request::new(&mut _headers);
+
         let mut buf = vec![0; 1024];
-        let n = match stream.read(&mut buf).await {
-            Ok(n) => n,
-            Err(e) => {
-                println!("ReadError: {}", e);
-                return String::new();
-            }
+        let n = stream.read(&mut buf).await.unwrap();
+
+        if n == 0 {
+            return None;
+        }
+
+        let _ = req.parse(&buf).unwrap();
+
+        let headers: RequestHeaders = HashMap::from_iter(req.headers.iter().map(|header| {
+            let key = header.name.to_lowercase();
+            let val = String::from_utf8_lossy(header.value).to_string();
+            (key, val)
+        }));
+
+        let _content_len = headers
+            .get("content-length")
+            .unwrap_or(&"0".to_string())
+            .parse::<usize>()
+            .unwrap_or(0);
+
+        let body = if _content_len > 0 {
+            let _buf = String::from_utf8_lossy(&buf);
+            let _parts = _buf.split_once("\r\n\r\n").unwrap();
+            _parts.1.replace("\0", "").clone()
+        } else {
+            String::new()
         };
 
-        String::from_utf8_lossy(&buf[0..n]).to_string()
+        let data = Some(Request {
+            method: req.method.unwrap().to_lowercase(),
+            route: req.path.unwrap().to_string(),
+            headers,
+            body,
+        });
+
+        data
     }
 
-    async fn _write(&self, stream: &mut TcpStream, data: &str) {
-        match stream.write_all(data.as_bytes()).await {
-            Ok(_) => (),
-            Err(e) => println!("WriteError: {}", e),
-        }
+    async fn write(&self, stream: &mut TcpStream, response: Response<String>) {
+        let (parts, body) = response.into_parts();
+
+        let status = parts.status.as_str();
+        let reason = parts.status.canonical_reason().unwrap();
+
+        let tag = format!("HTTP/1.1 {} {}", status, reason);
+        let header = format!("content-length: {}", body.len());
+
+        let data = format!("{}\r\n{}\r\n\r\n{}", tag, header, body);
+
+        stream.write_all(data.as_bytes()).await.unwrap();
+    }
+
+    fn create_blank_res(&self, code: u16) -> Response<String> {
+        let code = http::StatusCode::from_u16(code).unwrap();
+        Response::builder()
+            .status(code)
+            .body("{}".to_string())
+            .unwrap()
+    }
+
+    fn get_not_allowed_res(&self) -> Response<String> {
+        self.create_blank_res(405)
+    }
+
+    fn get_not_found_res(&self) -> Response<String> {
+        self.create_blank_res(404)
     }
 }
