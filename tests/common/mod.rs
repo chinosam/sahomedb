@@ -1,4 +1,5 @@
-use sahomedb::db::server::Server;
+use sahomedb::db::server::{Server, Value};
+use std::collections::HashMap;
 use tokio::runtime::Runtime;
 
 pub async fn run_server() -> (Runtime, String) {
@@ -13,6 +14,16 @@ pub async fn run_server() -> (Runtime, String) {
 
     runtime.spawn(async move {
         let server = Server::new("127.0.0.1", _port.as_str()).await;
+
+        // Define the initial kv pair.
+        let value = Value {
+            embedding: vec![0.0, 0.0, 0.0],
+            data: HashMap::new(),
+        };
+
+        // Add initial kv stores.
+        server.set("initial_key".to_string(), value);
+
         server.serve().await;
     });
 

@@ -20,10 +20,10 @@ type ResponseBody = HashMap<&'static str, &'static str>;
 
 // This is the data structure that will be stored in
 // the key-value store as the value.
-#[derive(Serialize, Deserialize, Debug)]
-struct Value {
-    embedding: Vec<f32>,
-    data: HashMap<String, String>,
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Value {
+    pub embedding: Vec<f32>,
+    pub data: HashMap<String, String>,
 }
 
 // Arc and Mutex to share the key-value store
@@ -98,9 +98,25 @@ impl Server {
 
     fn handle_kvs(&self, request: &Request) -> Response<String> {
         match request.method.as_str() {
+            "get" => self.get_kvs_key(request.route.clone()),
             "post" => self.post_kvs(request.body.clone()),
             _ => self.get_not_allowed_res(),
         }
+    }
+
+    // Native functionality handler.
+    // These are the functions that handle the native
+    // functionality of the database.
+    // Example: get, set, delete, etc.
+
+    pub fn get(&self, key: String) -> Option<Value> {
+        let kvs = self.kvs.lock().unwrap();
+        kvs.get(&key).cloned()
+    }
+
+    pub fn set(&self, key: String, value: Value) {
+        let mut kvs = self.kvs.lock().unwrap();
+        kvs.insert(key, value);
     }
 
     // Route functions.
@@ -125,6 +141,38 @@ impl Server {
             .status(200)
             .body(serde_json::to_string(&map).unwrap())
             .unwrap()
+    }
+
+    fn get_kvs_key(&self, route: String) -> Response<String> {
+        // Get the key from the route.
+        let route_parts: Vec<&str> = route.split("/").collect();
+        let key = route_parts.last().unwrap().to_string();
+
+        // If key is empty, return 400 with error message.
+        if key.is_empty() || route_parts.len() < 3 {
+            let mut _map = HashMap::new();
+            _map.insert("error", "The key is required.");
+            return self.create_res(400, Some(_map));
+        }
+
+        // Get the value from the key-value store.
+        let value = self.get(key.clone());
+
+        // If value is None, return 404 with error message.
+        if value.is_none() {
+            let mut _map = HashMap::new();
+            let msg = "The value is not found.";
+            _map.insert("error", msg);
+            return self.create_res(404, Some(_map));
+        }
+
+        // Serialize value as string for the response.
+        let body = {
+            let _val: Value = value.unwrap();
+            serde_json::to_string(&_val).unwrap()
+        };
+
+        Response::builder().status(200).body(body).unwrap()
     }
 
     fn post_kvs(&self, request_body: RequestBody) -> Response<String> {
@@ -159,8 +207,7 @@ impl Server {
         };
 
         // Insert the key-value pair into the key-value store.
-        let mut kvs = self.kvs.lock().unwrap();
-        kvs.insert(key, value);
+        self.set(key, value);
 
         // Serialize value as string for the response.
         let body = {
@@ -213,14 +260,12 @@ impl Server {
             return None;
         }
 
-        let data = Some(Request {
+        Some(Request {
             method: req.method.unwrap().to_lowercase(),
             route: req.path.unwrap().to_string(),
             headers,
             body: body.unwrap(),
-        });
-
-        data
+        })
     }
 
     async fn write(&self, stream: &mut TcpStream, response: Response<String>) {
