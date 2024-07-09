@@ -1,8 +1,8 @@
 pub mod client;
 pub mod server;
 
-use std::collections::HashMap;
 use serde_json::to_string;
+use std::collections::HashMap;
 
 pub struct ErrorResponse {
     pub code: String,

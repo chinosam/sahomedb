@@ -56,12 +56,12 @@ impl Server {
             // Normalize the command to lowercase.
             let command = json.get("command").unwrap().to_lowercase();
 
-           let error = {
-            let code = "unrecognized_command";
-            let msg = format!("Unrecognized command: {}.", command);
+            let error = {
+                let code = "unrecognized_command";
+                let msg = format!("Unrecognized command: {}.", command);
 
-            ErrorResponse::new(code, &msg).response()
-           };
+                ErrorResponse::new(code, &msg).response()
+            };
 
             // Handle the command for the response
             let response = match command.as_str() {
@@ -121,7 +121,6 @@ impl Server {
 
         to_string(&map).unwrap()
     }
-
 
     async fn _read(&self, stream: &mut TcpStream) -> String {
         let mut buf = vec![0; 1024];
