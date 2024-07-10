@@ -1,3 +1,6 @@
+use hora::core::ann_index::ANNIndex;
+use hora::index::hnsw_idx::HNSWIndex;
+use hora::index::hnsw_params::HNSWParams;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -21,19 +24,28 @@ pub struct Value {
 // across threads while ensuring exclusive access.
 type KeyValue = Arc<Mutex<HashMap<String, Value>>>;
 
+// HNSW index used for NN search.
+// Using f32 which refers to the inner type of the embedding.
+// Using String which refers to the type of the key.
+type Index = HNSWIndex<f32, String>;
+
 pub struct Server {
     addr: SocketAddr,
     kvs: KeyValue,
+    index: Index,
 }
 
 impl Server {
-    pub async fn new(host: &str, port: &str) -> Server {
+    pub async fn new(host: &str, port: &str, dimension: usize) -> Server {
         let addr = format!("{}:{}", host, port).parse().unwrap();
         let kvs = Arc::new(Mutex::new(HashMap::new()));
-        Server { addr, kvs }
+
+        let index_params = HNSWParams::<f32>::default();
+        let index: Index = HNSWIndex::new(dimension, &index_params);
+        Server { addr, kvs, index }
     }
 
-    pub async fn serve(&self) {
+    pub async fn serve(&mut self) {
         // Bind a listner to the socket address
         let listner = TcpListener::bind(self.addr).await.unwrap();
 
@@ -44,7 +56,7 @@ impl Server {
         }
     }
 
-    async fn handle_connection(&self, mut stream: TcpStream) {
+    async fn handle_connection(&mut self, mut stream: TcpStream) {
         loop {
             let req = stream::read(&mut stream).await;
 
@@ -84,9 +96,27 @@ impl Server {
         kvs.get(&key).cloned()
     }
 
-    pub fn set(&self, key: String, value: Value) {
+    pub fn set(&mut self, key: String, value: Value) -> Result<Value, &str> {
+        // Add the key-value to the index.
+        let embedding = value.embedding.clone();
+        let res = self.index.add(&embedding, key.clone());
+
+        if res.is_err() {
+            let err = res.err().unwrap();
+
+            // Handle hora default error message.
+            let message = match err {
+                _ if err.contains("dimension") => "The embedding dimension is invalid.",
+                _ => "Unable to add the value embedding.",
+            };
+
+            return Err(message);
+        }
+
         let mut kvs = self.kvs.lock().unwrap();
-        kvs.insert(key, value);
+        kvs.insert(key, value.clone());
+
+        Ok(value)
     }
 
     pub fn delete(&self, key: String) {

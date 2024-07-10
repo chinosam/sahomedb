@@ -9,11 +9,15 @@ pub async fn run_server() -> (Runtime, String) {
     // This is needed to run multiple tests in parallel and
     // prevent connection reset error when testing.
     let random_number = rand::random::<u16>() % 100 + 31400;
-    let port = random_number.to_string();
-    let _port = port.clone();
+    let _port = random_number.to_string();
+    let port = _port.clone();
 
     runtime.spawn(async move {
-        let server = Server::new("127.0.0.1", _port.as_str()).await;
+        let host = "127.0.0.1";
+        let port = port.as_str();
+        let dimension = 3;
+
+        let mut server = Server::new(host, port, dimension).await;
 
         // Define the initial kv pair.
         let value = Value {
@@ -22,12 +26,12 @@ pub async fn run_server() -> (Runtime, String) {
         };
 
         // Add initial kv stores.
-        server.set("initial_key".to_string(), value);
+        server.set("initial_key".to_string(), value).unwrap();
 
         server.serve().await;
     });
 
-    (runtime, port)
+    (runtime, _port)
 }
 
 pub async fn stop_server(runtime: Runtime) {
