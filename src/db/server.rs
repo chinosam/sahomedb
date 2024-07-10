@@ -63,9 +63,7 @@ impl Server {
             // Handle disconnection or invalid request.
             // Return invalid request response.
             if req.is_none() {
-                let mut res_body = HashMap::new();
-                res_body.insert("error", "Invalid request.");
-                let res = res::create_response(400, Some(res_body));
+                let res = res::get_error_response(400, "Invalid request.");
                 stream::write(&mut stream, res).await;
                 break;
             }
@@ -78,7 +76,7 @@ impl Server {
                 "/" => root::handler(req),
                 "/version" => version::handler(req),
                 _ if route.starts_with("/kvs") => kvs::handler(self, req),
-                _ => res::get_not_found_response(None),
+                _ => res::get_404_response(),
             };
 
             // Write the data back to the client.
@@ -91,9 +89,9 @@ impl Server {
     // functionality of the database.
     // Example: get, set, delete, etc.
 
-    pub fn get(&self, key: String) -> Option<Value> {
+    pub fn get(&self, key: String) -> Result<Value, &str> {
         let kvs = self.kvs.lock().unwrap();
-        kvs.get(&key).cloned()
+        kvs.get(&key).cloned().ok_or("The value is not found.")
     }
 
     pub fn set(&mut self, key: String, value: Value) -> Result<Value, &str> {
@@ -119,8 +117,8 @@ impl Server {
         Ok(value)
     }
 
-    pub fn delete(&self, key: String) {
+    pub fn delete(&self, key: String) -> Result<Value, &str> {
         let mut kvs = self.kvs.lock().unwrap();
-        kvs.remove(&key);
+        kvs.remove(&key).ok_or("The key doesn't exist.")
     }
 }

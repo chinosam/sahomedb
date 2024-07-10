@@ -1,28 +1,23 @@
 pub use http::Response;
 use std::collections::HashMap;
 
-// This type will be used to serialize the generic response body.
-// Example: {"status": "ok"}
-pub type ResponseBody = HashMap<&'static str, &'static str>;
-
-pub fn create_response(code: u16, body: Option<ResponseBody>) -> Response<String> {
+pub fn create_response(code: u16, body: Option<String>) -> Response<String> {
     let code = http::StatusCode::from_u16(code).unwrap();
-
-    // Serialize the body if provided.
-    let body = if let Some(body) = body {
-        serde_json::to_string(&body).unwrap()
-    } else {
-        // Default to an empty object.
-        "{}".to_string()
-    };
-
+    let body = body.unwrap_or(String::from("{}"));
     Response::builder().status(code).body(body).unwrap()
 }
 
-pub fn get_not_allowed_response() -> Response<String> {
+pub fn get_error_response(code: u16, message: &str) -> Response<String> {
+    let mut map = HashMap::new();
+    map.insert("error", message);
+    let body = serde_json::to_string(&map).unwrap();
+    create_response(code, Some(body))
+}
+
+pub fn get_405_response() -> Response<String> {
     create_response(405, None)
 }
 
-pub fn get_not_found_response(body: Option<ResponseBody>) -> Response<String> {
-    create_response(404, body)
+pub fn get_404_response() -> Response<String> {
+    create_response(404, None)
 }
