@@ -12,9 +12,12 @@ async fn main() {
 
     let config = Config { dimension };
 
-    let host = "127.0.0.1";
+    let host = "0.0.0.0";
     let mut server = Server::new(host, port.as_str(), config);
     server.serve().await;
+
+    println!("SahomeDB is running on port {}.", port);
+    println!("SahomeDB accepts embeddings of {} dimension.", dimension);
 }
 
 fn env_get_dimension() -> usize {
