@@ -44,7 +44,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub async fn new(host: &str, port: &str, config: Config) -> Server {
+    pub fn new(host: &str, port: &str, config: Config) -> Server {
         let addr = format!("{}:{}", host, port).parse().unwrap();
         let kvs = Arc::new(Mutex::new(HashMap::new()));
 
