@@ -120,7 +120,11 @@ impl Server {
     }
 
     // Index functionality handler.
-    pub fn build(&mut self) -> Result<&str, &str> {
+    pub fn build(
+        &mut self,
+        ef_search: usize,
+        ef_construction: usize,
+    ) -> Result<&str, &str> {
         // Clear the current index
         self.index = None;
 
@@ -136,9 +140,12 @@ impl Server {
         }
 
         // Build and set the index.
-        let index = Builder::default().ef_search(32).build(values, keys);
-        self.index = Some(index);
+        let index = Builder::default()
+            .ef_search(ef_search)
+            .ef_construction(ef_construction)
+            .build(values, keys);
 
+        self.index = Some(index);
         Ok("The index is built successfully.")
     }
 

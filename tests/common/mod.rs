@@ -34,7 +34,8 @@ pub async fn run_server() -> (Runtime, String) {
             server.set(key, value).unwrap();
         }
 
-        server.build().unwrap();
+        let ef = 10; // small EF for testing only.
+        server.build(ef, ef).unwrap();
 
         server.serve().await;
     });
