@@ -1,6 +1,3 @@
-use hora::core::ann_index::ANNIndex;
-use hora::index::hnsw_idx::HNSWIndex;
-use hora::index::hnsw_params::HNSWParams;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -12,37 +9,32 @@ use super::routes::version;
 use super::utils::response as res;
 use super::utils::stream;
 
+// Data type for the key-value store value metadata.
+pub type Data = HashMap<String, String>;
+
 // This is the data structure that will be stored in
 // the key-value store as the value.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Value {
     pub embedding: Vec<f32>,
-    pub data: HashMap<String, String>,
+    pub data: Data,
 }
 
 // Arc and Mutex to share the key-value store
 // across threads while ensuring exclusive access.
 type KeyValue = Arc<Mutex<HashMap<String, Value>>>;
 
-// HNSW index used for NN search.
-// Using f32 which refers to the inner type of the embedding.
-// Using String which refers to the type of the key.
-type Index = HNSWIndex<f32, String>;
-
 pub struct Server {
     addr: SocketAddr,
     kvs: KeyValue,
-    index: Index,
 }
 
 impl Server {
-    pub async fn new(host: &str, port: &str, dimension: usize) -> Server {
+    pub async fn new(host: &str, port: &str) -> Server {
         let addr = format!("{}:{}", host, port).parse().unwrap();
         let kvs = Arc::new(Mutex::new(HashMap::new()));
 
-        let index_params = HNSWParams::<f32>::default();
-        let index: Index = HNSWIndex::new(dimension, &index_params);
-        Server { addr, kvs, index }
+        Server { addr, kvs }
     }
 
     pub async fn serve(&mut self) {
@@ -95,22 +87,6 @@ impl Server {
     }
 
     pub fn set(&mut self, key: String, value: Value) -> Result<Value, &str> {
-        // Add the key-value to the index.
-        let embedding = value.embedding.clone();
-        let res = self.index.add(&embedding, key.clone());
-
-        if res.is_err() {
-            let err = res.err().unwrap();
-
-            // Handle hora default error message.
-            let message = match err {
-                _ if err.contains("dimension") => "The embedding dimension is invalid.",
-                _ => "Unable to add the value embedding.",
-            };
-
-            return Err(message);
-        }
-
         let mut kvs = self.kvs.lock().unwrap();
         kvs.insert(key, value.clone());
 

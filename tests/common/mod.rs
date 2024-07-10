@@ -1,3 +1,4 @@
+use rand::random;
 use sahomedb::db::server::{Server, Value};
 use std::collections::HashMap;
 use tokio::runtime::Runtime;
@@ -15,18 +16,21 @@ pub async fn run_server() -> (Runtime, String) {
     runtime.spawn(async move {
         let host = "127.0.0.1";
         let port = port.as_str();
-        let dimension = 3;
 
-        let mut server = Server::new(host, port, dimension).await;
+        let mut server = Server::new(host, port).await;
 
-        // Define the initial kv pair.
-        let value = Value {
-            embedding: vec![0.0, 0.0, 0.0],
-            data: HashMap::new(),
-        };
+        // Pre-populate the key-value store.
+        for i in 0..9 {
+            // Generate value with random embeddings.
+            let value = Value {
+                embedding: vec![random::<f32>(), random::<f32>()],
+                data: HashMap::new(),
+            };
 
-        // Add initial kv stores.
-        server.set("initial_key".to_string(), value).unwrap();
+            // Set the key-value pair.
+            let key = format!("key-{}", i);
+            server.set(key, value).unwrap();
+        }
 
         server.serve().await;
     });
