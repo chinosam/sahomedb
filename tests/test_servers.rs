@@ -11,6 +11,11 @@ const CREATE_KVS: &str = r#"{
     "value": {"embedding": [0.0, 0.0], "data": {}}
 }"#;
 
+const SEARCH: &str = r#"{
+    "embedding": [0.0, 0.0],
+    "count": 5
+}"#;
+
 #[tokio::test]
 async fn test_get_root() {
     let (runtime, port) = run_server().await;
@@ -27,7 +32,7 @@ async fn test_get_root() {
 async fn test_post_kvs() {
     let (runtime, port) = run_server().await;
 
-    // Make a post request.
+    // Make a post request to create key-value store.
     let url = format!("{}:{}/kvs", HOST, port);
     let client = Client::new();
     let res = client.post(&url).body(CREATE_KVS).send().await.unwrap();
@@ -42,7 +47,6 @@ async fn test_post_kvs() {
 async fn test_get_kvs() {
     let (runtime, port) = run_server().await;
 
-    // Get the key-value store.
     let url = format!("{}:{}/kvs/key-0", HOST, port);
     let res = get(url).await.unwrap();
 
@@ -60,8 +64,32 @@ async fn test_delete_kvs() {
     let client = Client::new();
     let res = client.delete(&url).send().await.unwrap();
 
-    // Assert the response code.
     assert_eq!(res.status(), 204);
+    stop_server(runtime).await;
+}
 
+#[tokio::test]
+async fn test_post_build() {
+    let (runtime, port) = run_server().await;
+
+    // Build the index.
+    let url = format!("{}:{}/build", HOST, port);
+    let client = Client::new();
+    let res = client.post(&url).send().await.unwrap();
+
+    assert_eq!(res.status(), 200);
+    stop_server(runtime).await;
+}
+
+#[tokio::test]
+async fn test_post_search() {
+    let (runtime, port) = run_server().await;
+
+    // Make a post request to search for nearest neighbors.
+    let url = format!("{}:{}/search", HOST, port);
+    let client = Client::new();
+    let res = client.post(&url).body(SEARCH).send().await.unwrap();
+
+    assert_eq!(res.status(), 200);
     stop_server(runtime).await;
 }

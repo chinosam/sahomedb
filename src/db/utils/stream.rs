@@ -17,11 +17,12 @@ pub async fn read(stream: &mut TcpStream) -> Option<req::Request> {
 
     let _ = req.parse(&buf).unwrap();
 
-    let headers: req::RequestHeaders = HashMap::from_iter(req.headers.iter().map(|header| {
-        let key = header.name.to_lowercase();
-        let val = String::from_utf8_lossy(header.value).to_string();
-        (key, val)
-    }));
+    let headers: req::RequestHeaders =
+        HashMap::from_iter(req.headers.iter().map(|header| {
+            let key = header.name.to_lowercase();
+            let val = String::from_utf8_lossy(header.value).to_string();
+            (key, val)
+        }));
 
     let content_len = headers
         .get("content-length")
