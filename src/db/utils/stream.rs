@@ -1,10 +1,10 @@
-use super::request as req;
+use super::request::{Request, RequestHeaders};
 use super::response::Response;
 use std::collections::HashMap;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
-pub async fn read(stream: &mut TcpStream) -> Option<req::Request> {
+pub async fn read(stream: &mut TcpStream) -> Option<Request> {
     let mut _headers = [httparse::EMPTY_HEADER; 16];
     let mut req = httparse::Request::new(&mut _headers);
 
@@ -17,7 +17,7 @@ pub async fn read(stream: &mut TcpStream) -> Option<req::Request> {
 
     let _ = req.parse(&buf).unwrap();
 
-    let headers: req::RequestHeaders =
+    let headers: RequestHeaders =
         HashMap::from_iter(req.headers.iter().map(|header| {
             let key = header.name.to_lowercase();
             let val = String::from_utf8_lossy(header.value).to_string();
@@ -38,14 +38,14 @@ pub async fn read(stream: &mut TcpStream) -> Option<req::Request> {
         "{}".to_string()
     };
 
-    let body: Option<req::RequestBody> = match serde_json::from_str(&body) {
+    let body = match serde_json::from_str(&body) {
         Ok(body) => body,
         Err(_) => None,
     };
 
     body.as_ref()?;
 
-    Some(req::Request {
+    Some(Request {
         method: req.method.unwrap().to_lowercase(),
         route: req.path.unwrap().to_string(),
         headers,
