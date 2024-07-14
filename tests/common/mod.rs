@@ -3,15 +3,8 @@ use sahomedb::db::server::{Config, Server, Value};
 use std::collections::HashMap;
 use tokio::runtime::Runtime;
 
-pub async fn run_server() -> (Runtime, String) {
+pub async fn run_server(port: String) -> Runtime {
     let runtime = Runtime::new().unwrap();
-
-    // Generate a random port 31xxx.
-    // This is needed to run multiple tests in parallel and
-    // prevent connection reset error when testing.
-    let random_number = random::<u16>() % 1000 + 31000;
-    let _port = random_number.to_string();
-    let port = _port.clone();
 
     runtime.spawn(async move {
         let host = "127.0.0.1";
@@ -40,7 +33,8 @@ pub async fn run_server() -> (Runtime, String) {
         server.serve().await;
     });
 
-    (runtime, _port)
+    // Return runtime as a handle to stop the server.
+    runtime
 }
 
 pub async fn stop_server(runtime: Runtime) {

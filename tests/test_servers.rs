@@ -18,11 +18,12 @@ const SEARCH: &str = r#"{
 
 #[tokio::test]
 async fn test_get_root() {
-    let (runtime, port) = run_server().await;
+    let port = String::from("31400");
 
     let url = format!("{}:{}", HOST, port);
-    let res = get(url).await.unwrap();
+    let runtime = run_server(port).await;
 
+    let res = get(url).await.unwrap();
     assert_eq!(res.status(), 200);
 
     stop_server(runtime).await;
@@ -30,10 +31,11 @@ async fn test_get_root() {
 
 #[tokio::test]
 async fn test_post_kvs() {
-    let (runtime, port) = run_server().await;
+    let port = String::from("31401");
+    let url = format!("{}:{}/kvs", HOST, port);
+    let runtime = run_server(port).await;
 
     // Make a post request to create key-value store.
-    let url = format!("{}:{}/kvs", HOST, port);
     let client = Client::new();
     let res = client.post(&url).body(CREATE_KVS).send().await.unwrap();
 
@@ -45,11 +47,14 @@ async fn test_post_kvs() {
 
 #[tokio::test]
 async fn test_get_kvs() {
-    let (runtime, port) = run_server().await;
+    let port = String::from("31402");
 
     let url = format!("{}:{}/kvs/key-0", HOST, port);
-    let res = get(url).await.unwrap();
 
+    let runtime = run_server(port).await;
+
+    // Call GET to get the value of the key.
+    let res = get(url).await.unwrap();
     // Assert the response code.
     assert_eq!(res.status(), 200);
 
@@ -58,9 +63,12 @@ async fn test_get_kvs() {
 
 #[tokio::test]
 async fn test_delete_kvs() {
-    let (runtime, port) = run_server().await;
+    let port = String::from("31403");
 
-    let url = format!("{}:{}/kvs/key-0", HOST, port);
+    let url = format!("{}:{}/kvs/key-5", HOST, port);
+
+    let runtime = run_server(port).await;
+
     let client = Client::new();
     let res = client.delete(&url).send().await.unwrap();
 
@@ -70,23 +78,28 @@ async fn test_delete_kvs() {
 
 #[tokio::test]
 async fn test_post_build() {
-    let (runtime, port) = run_server().await;
+    let port = String::from("31404");
 
     // Build the index.
     let url = format!("{}:{}/build", HOST, port);
+    let runtime = run_server(port).await;
     let client = Client::new();
-    let res = client.post(&url).send().await.unwrap();
 
+    let res = client.post(&url).send().await.unwrap();
     assert_eq!(res.status(), 200);
     stop_server(runtime).await;
 }
 
 #[tokio::test]
 async fn test_post_search() {
-    let (runtime, port) = run_server().await;
+    let port = String::from("31405");
 
     // Make a post request to search for nearest neighbors.
     let url = format!("{}:{}/search", HOST, port);
+    let runtime = run_server(port).await;
+
+    // The body embedding is required and the dimension
+    // must match the dimension specified in the config.
     let client = Client::new();
     let res = client.post(&url).body(SEARCH).send().await.unwrap();
 
