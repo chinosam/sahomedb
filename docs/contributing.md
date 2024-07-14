@@ -4,7 +4,7 @@ First of all, thank you for considering contributing to SahomeDB! We welcome con
 
 ## Code of Conduct
 
-We are committed to creating a welcoming community. Any participant in our project is expected to act respectfully and to follow the [Code of Conduct](code_of_conduct.md).
+We are committed to creating a welcoming community. Any participant in our project is expected to act respectfully and to follow the [Code of Conduct](/docs/code_of_conduct.md).
 
 ## Have questions or suggestions?
 
