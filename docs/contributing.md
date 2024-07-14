@@ -10,7 +10,7 @@ We are committed to creating a welcoming community. Any participant in our proje
 
 ## Encounter a bug? Have a feature request?
 
-If you encounter a bug or have a feature request, please open an issue on [GitHub](https://github.com/sahomedb/sahomedb/issues).
+If you encounter a bug or have a feature request, please open an issue on [GitHub](https://github.com/Sahomey-Technologies/sahomedb/issues).
 
 Please include as much information as possible in your issue. This includes:
 
