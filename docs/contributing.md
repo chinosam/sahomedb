@@ -8,6 +8,10 @@ We are committed to creating a welcoming community. Any participant in our proje
 
 ## Have questions or suggestions?
 
+[![Discord](https://img.shields.io/discord/1182432298382131200?logo=discord&logoColor=%23ffffff&label=Discord&labelColor=%235865F2&style=for-the-badge)](https://discord.gg/bDhQddfrkqNP4)
+
+There is no such thing as a stupid question. If you have a question, chances are someone else does too. We encourage you to ask questions on our [Discord](https://discord.gg/bDhQrddfkaqNP4) server.
+
 ## Encounter a bug? Have a feature request?
 
 If you encounter a bug or have a feature request, please open an issue on [GitHub](https://github.com/Sahomey-Technologies/sahomedb/issues).
