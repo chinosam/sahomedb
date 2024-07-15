@@ -10,7 +10,10 @@ async fn main() {
 
     let dimension = env_get_dimension();
 
-    let config = Config { dimension };
+    let config = {
+        let token = get_env("SAHOMEDB_TOKEN");
+        Config { dimension, token }
+    };
 
     println!("SahomeDB is running on port {}.", port);
     println!("SahomeDB accepts embeddings of {} dimension.", dimension);
@@ -21,10 +24,12 @@ async fn main() {
 }
 
 fn env_get_dimension() -> usize {
-    let not_set = "env variable 'SAHOMEDB_DIMENSION' required";
-    let not_int = "variable 'SAHOMEDB_DIMENSION' must be an integer";
-    env::var("SAHOMEDB_DIMENSION")
-        .expect(not_set)
+    get_env("SAHOMEDB_DIMENSION")
         .parse::<usize>()
-        .expect(not_int)
+        .expect("variable 'SAHOMEDB_DIMENSION' must be an integer")
+}
+
+fn get_env(key: &str) -> String {
+    let not_set = format!("env variable '{}' required", key);
+    env::var(key).expect(&not_set)
 }

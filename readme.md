@@ -20,11 +20,15 @@ This will pull the latest version of the server from the GitHub Container Regist
 docker run \
     --platform linux/amd64 \
     --publish 3141:3141 \
-    --env SAHOMEDB_DIMENSION=xxx \
+    --env SAHOMEDB_DIMENSION=512 \
+    --env SAHOMEDB_TOKEN=token \
     ghcr.io/sahomey-technologies/sahomedb:latest
 ```
 
-Replace `xxx` with the dimension of your desired embedding. This will start the server on port `3141`.
+- `SAHOMEDB_DIMENSION`: An integer representing the dimension of your embedding. Different embedding model will have different dimension. For example, OpenAI Ada 2 has a dimension of 1536.
+- `SAHOMEDB_TOKEN`: A string that you will use to authenticate with the server. You need to add `x-sahomedb-token` header to your request with the value of this environment variable.
+
+This will start SahomeDB that is accessible on port `3141`. You can change this by changing the port number in the `--publish` flag and setting the `SAHOMEDB_PORT` environment variable to the port number that you want to use.
 
 ### Testing the server
 

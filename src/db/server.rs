@@ -1,17 +1,11 @@
+use super::routes::handle_connection;
 use instant_distance::HnswMap as HNSW;
 use instant_distance::{Builder, Search};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use tokio::net::{TcpListener, TcpStream};
 
-use super::routes::index;
-use super::routes::root;
-use super::routes::values;
-use super::routes::version;
-
-use super::utils::response as res;
-use super::utils::stream;
+use tokio::net::TcpListener;
 
 // Data type for the key-value store value's metadata.
 pub type Data = HashMap<String, String>;
@@ -33,13 +27,14 @@ type Index = Option<HNSW<Value, String>>;
 // db
 pub struct Config {
     pub dimension: usize,
+    pub token: String,
 }
 
 pub struct Server {
-    addr: SocketAddr,
+    pub addr: SocketAddr,
+    pub config: Config,
     kvs: KeyValue,
     index: Index,
-    config: Config,
 }
 
 impl Server {
@@ -54,41 +49,12 @@ impl Server {
 
     pub async fn serve(&mut self) {
         // Bind a listner to the socket address
-        let listner = TcpListener::bind(self.addr).await.unwrap();
+        let listener = TcpListener::bind(self.addr).await.unwrap();
 
         loop {
-            let (stream, _) = listner.accept().await.unwrap();
-            let handler = self.handle_connection(stream).await;
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let handler = handle_connection(self, &mut stream).await;
             tokio::spawn(async move { handler });
-        }
-    }
-
-    async fn handle_connection(&mut self, mut stream: TcpStream) {
-        loop {
-            let req = stream::read(&mut stream).await;
-
-            // Handle disconnection or invalid request.
-            // Return invalid request response.
-            if req.is_none() {
-                let res = res::get_error_response(400, "Invalid request.");
-                stream::write(&mut stream, res).await;
-                break;
-            }
-
-            let req = req.as_ref().unwrap();
-            let route = req.route.clone();
-
-            // Handle the command for the response
-            let response = match route.as_str() {
-                "/" => root::handler(req),
-                "/version" => version::handler(req),
-                _ if route.starts_with("/index") => index::handler(self, req),
-                _ if route.starts_with("/values") => values::handler(self, req),
-                _ => res::get_404_response(),
-            };
-
-            // Write the data back to the client.
-            stream::write(&mut stream, response).await;
         }
     }
 
