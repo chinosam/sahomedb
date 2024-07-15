@@ -11,7 +11,7 @@ const CREATE_VALUE: &str = r#"{
     "value": {"embedding": [0.0, 0.0], "data": {}}
 }"#;
 
-const SEARCH: &str = r#"{
+const QUERY: &str = r#"{
     "embedding": [0.0, 0.0],
     "count": 5
 }"#;
@@ -77,11 +77,11 @@ async fn test_delete_values() {
 }
 
 #[tokio::test]
-async fn test_post_build() {
+async fn test_post_index() {
     let port = String::from("31404");
 
     // Build the index.
-    let url = format!("{}:{}/build", HOST, port);
+    let url = format!("{}:{}/index", HOST, port);
     let runtime = run_server(port).await;
     let client = Client::new();
 
@@ -91,17 +91,17 @@ async fn test_post_build() {
 }
 
 #[tokio::test]
-async fn test_post_search() {
+async fn test_post_index_query() {
     let port = String::from("31405");
 
     // Make a post request to search for nearest neighbors.
-    let url = format!("{}:{}/search", HOST, port);
+    let url = format!("{}:{}/index/query", HOST, port);
     let runtime = run_server(port).await;
 
     // The body embedding is required and the dimension
     // must match the dimension specified in the config.
     let client = Client::new();
-    let res = client.post(&url).body(SEARCH).send().await.unwrap();
+    let res = client.post(&url).body(QUERY).send().await.unwrap();
 
     assert_eq!(res.status(), 200);
     stop_server(runtime).await;
