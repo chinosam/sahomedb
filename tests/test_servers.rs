@@ -6,7 +6,7 @@ use reqwest::{get, Client};
 const HOST: &str = "http://127.0.0.1";
 
 // JSON body to create a new key-value store.
-const CREATE_KVS: &str = r#"{
+const CREATE_VALUE: &str = r#"{
     "key": "key-10",
     "value": {"embedding": [0.0, 0.0], "data": {}}
 }"#;
@@ -30,14 +30,14 @@ async fn test_get_root() {
 }
 
 #[tokio::test]
-async fn test_post_kvs() {
+async fn test_post_values() {
     let port = String::from("31401");
-    let url = format!("{}:{}/kvs", HOST, port);
+    let url = format!("{}:{}/values", HOST, port);
     let runtime = run_server(port).await;
 
     // Make a post request to create key-value store.
     let client = Client::new();
-    let res = client.post(&url).body(CREATE_KVS).send().await.unwrap();
+    let res = client.post(&url).body(CREATE_VALUE).send().await.unwrap();
 
     // Assert the response code.
     assert_eq!(res.status(), 201);
@@ -46,10 +46,10 @@ async fn test_post_kvs() {
 }
 
 #[tokio::test]
-async fn test_get_kvs() {
+async fn test_get_values() {
     let port = String::from("31402");
 
-    let url = format!("{}:{}/kvs/key-0", HOST, port);
+    let url = format!("{}:{}/values/key-0", HOST, port);
 
     let runtime = run_server(port).await;
 
@@ -62,10 +62,10 @@ async fn test_get_kvs() {
 }
 
 #[tokio::test]
-async fn test_delete_kvs() {
+async fn test_delete_values() {
     let port = String::from("31403");
 
-    let url = format!("{}:{}/kvs/key-5", HOST, port);
+    let url = format!("{}:{}/values/key-5", HOST, port);
 
     let runtime = run_server(port).await;
 

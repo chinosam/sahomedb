@@ -6,9 +6,9 @@ use std::sync::{Arc, Mutex};
 use tokio::net::{TcpListener, TcpStream};
 
 use super::routes::build;
-use super::routes::kvs;
 use super::routes::root;
 use super::routes::search;
+use super::routes::values;
 use super::routes::version;
 
 use super::utils::response as res;
@@ -85,7 +85,7 @@ impl Server {
                 "/version" => version::handler(req),
                 "/build" => build::handler(self, req),
                 "/search" => search::handler(self, req),
-                _ if route.starts_with("/kvs") => kvs::handler(self, req),
+                _ if route.starts_with("/values") => values::handler(self, req),
                 _ => res::get_404_response(),
             };
 

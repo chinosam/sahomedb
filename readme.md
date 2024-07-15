@@ -35,9 +35,9 @@ curl http://localhost:3141
 You can replace `localhost` with the IP address of the server if you are running the server on a remote machine.
 
 
-### `POST /kvs`
+### `POST /values`
 
-Set the value of a key. See below for the expected format of the request body.
+Create or update the value of a key. See below for the expected format of the request body.
 
 ```json
 {
