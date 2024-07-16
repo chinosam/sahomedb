@@ -1,14 +1,22 @@
 use super::request::{Request, RequestHeaders};
 use super::response::Response;
 use std::collections::HashMap;
+use std::env;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
 pub async fn read(stream: &mut TcpStream) -> Option<Request> {
+    // The default buffer size is 32KB which is large enough
+    // for 1536 dimensions embeddings.
+    let buffer_size = env::var("SAHOMEDB_BUFFER_SIZE")
+        .unwrap_or(String::from("32768"))
+        .parse::<usize>()
+        .unwrap();
+
     let mut _headers = [httparse::EMPTY_HEADER; 16];
     let mut req = httparse::Request::new(&mut _headers);
 
-    let mut buf = vec![0; 1024];
+    let mut buf = vec![0; buffer_size];
     let n = stream.read(&mut buf).await.unwrap();
 
     if n == 0 {
