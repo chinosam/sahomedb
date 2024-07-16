@@ -50,8 +50,6 @@ fn post(server: &Server, body: RequestBody) -> res::Response<String> {
         return res::get_error_response(400, message);
     }
 
-    // Get the key from request body.
-    // Validate that key is string.
     let key: String = match body["key"].as_str() {
         Some(key) => key.to_string(),
         None => {
@@ -60,8 +58,6 @@ fn post(server: &Server, body: RequestBody) -> res::Response<String> {
         }
     };
 
-    // Get the value from request body.
-    // Validate that value is a Value struct.
     let _val = body["value"].clone();
     let value: Value = match serde_json::from_value(_val) {
         Ok(value) => value,
@@ -79,13 +75,7 @@ fn post(server: &Server, body: RequestBody) -> res::Response<String> {
         return res::get_error_response(400, message);
     }
 
-    // Serialize value as string for the response.
-    let body = {
-        let _val = result.unwrap();
-        serde_json::to_string(&_val).unwrap()
-    };
-
-    res::create_response(201, Some(body))
+    res::create_response(201, None)
 }
 
 fn delete(server: &Server, route: String) -> res::Response<String> {
