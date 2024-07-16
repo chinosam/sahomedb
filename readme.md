@@ -65,10 +65,10 @@ The `data` field is an object that can be used to store additional information a
 
 ### Build the index
 
-Build the HNSW index. This operation is required before you can query the index. We use HNSW as the underlying algorithm for the embedding index and for that, we use [instant-distance](https://github.com/instant-labs/instant-distance) crate.
+Build the HNSW graph. This operation is required before you can query the index. We use HNSW as the underlying algorithm for the embedding index and for that, we use [instant-distance](https://github.com/instant-labs/instant-distance) crate.
 
 ```
-POST /index
+POST /graphs
 ```
 
 Optionally, you can specify `ef_construction` and `ef_search` in the request body. These are the parameters for the HNSW algorithm. By default, we use `100` for both parameters.
@@ -80,12 +80,12 @@ Optionally, you can specify `ef_construction` and `ef_search` in the request bod
 }
 ```
 
-### Query the index
+### Query the graph
 
-Query the index given an embedding. See below for the expected format of the request body.
+Query the graph given an embedding. See below for the expected format of the request body.
 
 ```
-POST /index/query
+POST /graphs/query
 ```
 
 ```json

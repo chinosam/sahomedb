@@ -42,7 +42,7 @@ pub async fn run_server(port: String) -> Runtime {
         }
 
         let ef = 10; // small EF for testing only.
-        server.build(ef, ef).unwrap();
+        server.build("default".into(), ef, ef).unwrap();
 
         handle_request(&server, &mut stream).await;
     });
