@@ -17,7 +17,7 @@ pub async fn handle_connection(server: &mut Server, stream: &mut TcpStream) {
     }
 }
 
-async fn handle_request(server: &mut Server, stream: &mut TcpStream) {
+pub async fn handle_request(server: &Server, stream: &mut TcpStream) {
     let req = stream::read(stream).await;
 
     if req.is_none() {

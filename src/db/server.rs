@@ -1,11 +1,7 @@
-use super::routes::handle_connection;
 use instant_distance::HnswMap as HNSW;
 use instant_distance::{Builder, Search};
 use std::collections::HashMap;
-use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-
-use tokio::net::TcpListener;
 
 // Data type for the key-value store value's metadata.
 pub type Data = HashMap<String, String>;
@@ -22,7 +18,7 @@ pub struct Value {
 // across threads while ensuring exclusive access.
 type KeyValue = Arc<Mutex<HashMap<String, Value>>>;
 
-type Index = Option<HNSW<Value, String>>;
+type Index = Arc<Mutex<Vec<HNSW<Value, String>>>>;
 
 // db
 pub struct Config {
@@ -31,31 +27,17 @@ pub struct Config {
 }
 
 pub struct Server {
-    pub addr: SocketAddr,
     pub config: Config,
     kvs: KeyValue,
     index: Index,
 }
 
 impl Server {
-    pub fn new(host: &str, port: &str, config: Config) -> Server {
-        let addr = format!("{}:{}", host, port).parse().unwrap();
-        let kvs = Arc::new(Mutex::new(HashMap::new()));
+    pub fn new(config: Config) -> Server {
+        let kvs: KeyValue = Arc::new(Mutex::new(HashMap::new()));
+        let index: Index = Arc::new(Mutex::new(Vec::with_capacity(1)));
 
-        let index: Index = None;
-
-        Server { addr, kvs, index, config }
-    }
-
-    pub async fn serve(&mut self) {
-        // Bind a listner to the socket address
-        let listener = TcpListener::bind(self.addr).await.unwrap();
-
-        loop {
-            let (mut stream, _) = listener.accept().await.unwrap();
-            let handler = handle_connection(self, &mut stream).await;
-            tokio::spawn(async move { handler });
-        }
+        Server { kvs, index, config }
     }
 
     // Native functionality handler.
@@ -68,7 +50,7 @@ impl Server {
         kvs.get(&key).cloned().ok_or("The value is not found.")
     }
 
-    pub fn set(&mut self, key: String, value: Value) -> Result<Value, &str> {
+    pub fn set(&self, key: String, value: Value) -> Result<Value, &str> {
         if value.embedding.len() != self.config.dimension {
             return Err("The embedding dimension is invalid.");
         }
@@ -85,12 +67,13 @@ impl Server {
 
     // Index functionality handler.
     pub fn build(
-        &mut self,
+        &self,
         ef_search: usize,
         ef_construction: usize,
     ) -> Result<&str, &str> {
         // Clear the current index
-        self.index = None;
+        let mut index = self.index.lock().unwrap();
+        index.clear();
 
         // Get the key-value store.
         let kvs = self.kvs.lock().unwrap();
@@ -104,12 +87,12 @@ impl Server {
         }
 
         // Build and set the index.
-        let index = Builder::default()
+        let _index = Builder::default()
             .ef_search(ef_search)
             .ef_construction(ef_construction)
             .build(values, keys);
 
-        self.index = Some(index);
+        index.push(_index);
         Ok("The index is built successfully.")
     }
 
@@ -123,9 +106,14 @@ impl Server {
             return Err("The embedding dimension is invalid.");
         }
 
-        let index = self.index.as_ref().ok_or("The index is not built.")?;
+        let _index = self.index.lock().unwrap();
+        let index = match _index.first() {
+            Some(index) => index,
+            None => return Err("The index is not built yet."),
+        };
 
         // Create a decoy value with the provided embedding.
+        // Data is not needed for the search.
         let point = Value { embedding, data: HashMap::new() };
 
         let mut search = Search::default();

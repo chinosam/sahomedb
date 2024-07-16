@@ -1,7 +1,10 @@
 use rand::random;
 use reqwest::header::HeaderMap;
+use sahomedb::db::routes::handle_request;
 use sahomedb::db::server::{Config, Server, Value};
 use std::collections::HashMap;
+use std::net::SocketAddr;
+use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
 
 pub async fn run_server(port: String) -> Runtime {
@@ -10,10 +13,14 @@ pub async fn run_server(port: String) -> Runtime {
     runtime.spawn(async move {
         let host = "127.0.0.1";
         let port = port.as_str();
+        let addr: SocketAddr = format!("{}:{}", host, port).parse().unwrap();
+
+        let listener = TcpListener::bind(addr).await.unwrap();
+        let (mut stream, _) = listener.accept().await.unwrap();
 
         let config = Config { dimension: 2, token: "token".to_string() };
 
-        let mut server = Server::new(host, port, config);
+        let server = Server::new(config);
 
         // Pre-populate the key-value store.
         for i in 0..9 {
@@ -31,7 +38,7 @@ pub async fn run_server(port: String) -> Runtime {
         let ef = 10; // small EF for testing only.
         server.build(ef, ef).unwrap();
 
-        server.serve().await;
+        handle_request(&server, &mut stream).await;
     });
 
     // Return runtime as a handle to stop the server.

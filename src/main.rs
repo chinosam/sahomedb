@@ -1,5 +1,6 @@
 use dotenv::dotenv;
-use sahomedb::db::server::{Config, Server};
+use sahomedb::db::server::Config;
+use sahomedb::serve;
 use std::env;
 
 #[tokio::main]
@@ -19,8 +20,7 @@ async fn main() {
     println!("SahomeDB accepts embeddings of {} dimension.", dimension);
 
     let host = "0.0.0.0";
-    let mut server = Server::new(host, port.as_str(), config);
-    server.serve().await;
+    serve(host, &port, config).await;
 }
 
 fn env_get_dimension() -> usize {
