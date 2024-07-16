@@ -110,6 +110,23 @@ If, for example, your value's data contains `text` and `source` information, thi
 ]
 ```
 
+## Environment configuration
+
+When starting SahomeDB, you can configure the server by setting the environment variables. There are required variables that you need to set to get the server running and there are also optional variables that you can set to customize the server.
+
+If you're curious, every environment variables is listed in the [`.env.example`](/.env.example) file.
+
+### Required variables
+
+The required environment variables is listed in the getting started section above as they are required to get the server running.
+
+### Optional variables
+
+- `SAHOMEDB_PORT`: An integer of the port number that the server will listen to for requests. (Default: `3141`)
+
+- `SAHOMEDB_BUFFER_SIZE`: An integer representing the maximum size of the request. (Default: `32768` or 32KB)
+
+
 ## Disclaimer
 
 This project is still in the early stages of development. We are actively working on it and we expect the API and functionality to change. We do not recommend using this in production yet.

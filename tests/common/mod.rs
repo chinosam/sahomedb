@@ -3,22 +3,28 @@ use reqwest::header::HeaderMap;
 use sahomedb::db::routes::handle_request;
 use sahomedb::db::server::{Config, Server, Value};
 use std::collections::HashMap;
+use std::fs::remove_dir_all;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
+
+const DATA_DIR: &str = "tests/data";
 
 pub async fn run_server(port: String) -> Runtime {
     let runtime = Runtime::new().unwrap();
 
     runtime.spawn(async move {
-        let host = "127.0.0.1";
-        let port = port.as_str();
-        let addr: SocketAddr = format!("{}:{}", host, port).parse().unwrap();
+        let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
 
         let listener = TcpListener::bind(addr).await.unwrap();
         let (mut stream, _) = listener.accept().await.unwrap();
 
-        let config = Config { dimension: 2, token: "token".to_string() };
+        let config = {
+            let dimension = 2;
+            let token = "token".to_string();
+            let path = format!("{}/{}", DATA_DIR, port);
+            Config { dimension, token, path }
+        };
 
         let server = Server::new(config);
 
@@ -45,8 +51,10 @@ pub async fn run_server(port: String) -> Runtime {
     runtime
 }
 
-pub async fn stop_server(runtime: Runtime) {
+pub async fn stop_server(runtime: Runtime, port: String) {
     runtime.shutdown_background();
+
+    remove_dir_all(format!("{}/{}", DATA_DIR, port)).unwrap();
 }
 
 pub fn get_headers() -> HeaderMap {

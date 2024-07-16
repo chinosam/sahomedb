@@ -13,7 +13,8 @@ async fn main() {
 
     let config = {
         let token = get_env("SAHOMEDB_TOKEN");
-        Config { dimension, token }
+        let path = "data".to_string();
+        Config { dimension, token, path }
     };
 
     println!("SahomeDB is running on port {}.", port);
