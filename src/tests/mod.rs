@@ -1,11 +1,11 @@
 use crate::api::*;
 use crate::create_server;
 use crate::db::database::*;
-use dotenv::dotenv;
 use rand::random;
 use rocket::http::*;
 use rocket::local::blocking::Client;
 use std::collections::HashMap;
+use std::env;
 
 mod test_graphs;
 mod test_utils;
@@ -33,7 +33,8 @@ fn get_auth_header() -> Header<'static> {
 /// let client = create_test_client("test_name");
 /// ```
 fn create_test_client(id: &str) -> Client {
-    dotenv().ok();
+    env::set_var("SAHOMEDB_DIMENSION", "2");
+    env::set_var("SAHOMEDB_TOKEN", "token");
 
     let path = format!("data/tests/{}", id);
     let config = Config { path, dimension: 2 };
