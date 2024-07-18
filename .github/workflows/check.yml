@@ -14,8 +14,8 @@ on:
       - main
 
 env:
-  TOOLCHAIN: stable
-  PROFILE: minimal
+  SAHOMEDB_TOKEN: token
+  SAHOMEDB_DIMENSION: 2
 
 jobs:
   run-check:
