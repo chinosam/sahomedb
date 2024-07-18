@@ -25,18 +25,43 @@ impl Response {
         Response(String::from("{}"))
     }
 
+    /// Creates a standard error object like this:
+    /// ```json
+    /// { "error": "message" }
+    /// ```
     pub fn error(message: &str) -> Response {
         let map = HashMap::from([("error", message)]);
         let body = serde_json::to_string(&map).unwrap();
         Response(body)
     }
 
+    /// Creates an object from a custom data type. This requires the
+    /// data to have derived from the `Serialize` trait.
+    ///
+    /// # Example
+    ///
+    /// ```rs
+    /// #[derive(Serialize)]
+    /// struct Data {}
+    /// let response = Response::from(Data {});
+    ///
     pub fn from<Value: Serialize>(value: Value) -> Response {
         let body = serde_json::to_string(&value).unwrap();
         Response(body)
     }
 }
 
+/// A custom data type that is used to authenticate requests.
+/// When handling routes that are private, we can add this type to
+/// the function parameters and Rocket will automatically check if
+/// the request has the correct token.
+///
+/// # Example
+///
+/// ```rs
+/// #[get("/private")]
+/// pub fn private_route(_auth: Auth) {}
+/// ```
 pub struct Auth {
     pub token: String,
 }
