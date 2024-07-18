@@ -172,6 +172,13 @@ impl Database {
         }
     }
 
+    pub fn reset_values(&self) -> Result<(), Error> {
+        match self.value_db.clear() {
+            Ok(_) => Ok(()),
+            Err(_) => Err("Failed to reset values."),
+        }
+    }
+
     /// Queries the graph with the given name and returns the nearest
     /// neighbors of the given embedding. This doesn't return the
     /// `Value.embedding` but only the associated `Value.data`.
@@ -216,6 +223,13 @@ impl Database {
 
         data.truncate(k);
         Ok(data)
+    }
+
+    pub fn reset_graphs(&self) -> Result<(), Error> {
+        match self.graph_db.clear() {
+            Ok(_) => Ok(()),
+            Err(_) => Err("Failed to reset graphs."),
+        }
     }
 }
 

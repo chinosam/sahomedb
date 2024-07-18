@@ -89,3 +89,11 @@ pub fn query_graph(
         Err(message) => (Status::BadRequest, Response::error(message)),
     }
 }
+
+#[delete("/")]
+pub fn reset_graphs(db: &State<Database>, _auth: Auth) -> (Status, Response) {
+    match db.reset_graphs() {
+        Ok(_) => (Status::Ok, Response::empty()),
+        Err(message) => (Status::BadRequest, Response::error(message)),
+    }
+}
