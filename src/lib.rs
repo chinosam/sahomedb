@@ -1,13 +1,11 @@
 pub mod api;
 pub mod db;
 
-// Import modules.
 use api::*;
 use db::database::*;
 use rocket::http::Status;
 use rocket::Build;
 use rocket::Rocket;
-
 use std::env;
 
 #[macro_use]

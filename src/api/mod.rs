@@ -14,9 +14,14 @@ pub use graphs::*;
 pub use utils::*;
 pub use values::*;
 
-// Not the recommended way to do this as this requires manually
-// serializing the response. Be careful with this approach.
-#[derive(Responder)]
+/// A **generic body** type that can be used by all endpoints to
+/// return any response. The string will be converted to JSON by
+/// Rocket automatically.
+///
+/// This is not the recommended way to return responses in Rocket
+/// compared to using `Json` and that's why if possible, use
+/// the implementations to minimize errors.
+#[derive(Responder, Debug)]
 #[response(content_type = "json")]
 pub struct Response(String);
 
