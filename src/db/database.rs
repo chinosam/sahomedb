@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sled::Db as DB;
 use std::collections::HashMap;
 
-pub struct Message(pub &'static str);
+type Error = &'static str;
 
 pub type Data = HashMap<String, String>;
 
@@ -33,36 +33,38 @@ impl Database {
         Database { config, value_db, graph_db }
     }
 
-    pub fn get_value(&self, key: &str) -> Result<Value, Message> {
+    pub fn get_value(&self, key: &str) -> Result<Value, Error> {
         let result = self.value_db.get(key);
 
         if result.is_err() {
-            return Err(Message("Failed to get value."));
+            return Err("Failed to get value.");
         }
 
         match result.unwrap() {
             Some(value) => Ok(serde_json::from_slice(&value).unwrap()),
-            None => Err(Message("Value not found.")),
+            None => Err("Value not found."),
         }
     }
 
-    pub fn set_value(&self, key: &str, value: Value) -> Result<(), Message> {
+    pub fn set_value(&self, key: &str, value: Value) -> Result<(), Error> {
         if value.embedding.len() != self.config.dimension {
-            return Err(Message("Invalid embedding dimension."));
+            return Err("Invalid embedding dimension.");
         }
 
-        let result = {
-            let value = serde_json::to_vec(&value).unwrap();
-            self.value_db.insert(key, value)
-        };
+        let value = serde_json::to_vec(&value).unwrap();
 
-        match result {
+        match self.value_db.insert(key, value) {
             Ok(_) => Ok(()),
-            Err(_) => Err(Message("Failed to set value.")),
+            Err(_) => Err("Failed to set value."),
         }
     }
 
-    pub fn delete_value() {}
+    pub fn delete_value(&self, key: &str) -> Result<(), Error> {
+        match self.value_db.remove(key).unwrap() {
+            Some(_) => Ok(()),
+            None => Err("Value not found."),
+        }
+    }
 
     // Graph methods.
 
