@@ -52,7 +52,7 @@ impl<const N: usize> Tree<N> {
                 *self = Self::build(leaf, vectors, max_leaf_size);
             }
         } else if let Tree::Branch(branch) = self {
-            match branch.hyperplane.point_is_above(&data.1) {
+            match branch.hyperplane.point_is_above(data.1) {
                 true => &mut branch.right_tree,
                 false => &mut branch.left_tree,
             }
@@ -64,7 +64,7 @@ impl<const N: usize> Tree<N> {
         if let Tree::Leaf(leaf) = self {
             leaf.retain(|&item| item != data.0);
         } else if let Tree::Branch(branch) = self {
-            match branch.hyperplane.point_is_above(&data.1) {
+            match branch.hyperplane.point_is_above(data.1) {
                 true => &mut branch.right_tree,
                 false => &mut branch.left_tree,
             }

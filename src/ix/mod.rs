@@ -6,7 +6,6 @@ pub mod vector;
 
 use hyperplane::*;
 use tree::*;
-use vector::*;
 
 // External deps.
 use dashmap::DashSet;
@@ -15,5 +14,4 @@ use rand::prelude::SliceRandom;
 use std::cmp::min;
 use std::collections::HashMap;
 
-pub use index::*;
 pub use vector::*;
