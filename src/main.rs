@@ -1,3 +1,1 @@
-use sahomedb::*;
-
 fn main() {}
