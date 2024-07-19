@@ -4,63 +4,58 @@ use serde::*;
 use sled::Db as DB;
 use std::collections::HashMap;
 
-type Error = &'static str;
-
-pub type Data = HashMap<String, String>;
-pub type Embedding = Vec<f32>;
-
+/// The data structure of the value that will be
+/// stored in the value database.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Value {
     pub embedding: Embedding,
+    /// The data associated with the embedding. This can be used to store
+    /// any data that is associated with the embedding. For example, if
+    /// the embedding is a vector of a person's face, the data can be
+    /// the person's name.
     pub data: Data,
 }
 
-/// A type alias for the HNSW (Hierarchical Navigable Small World)
-/// graph. This is the graph that will be used to query the embedding.
-/// Check the documentation of `instant_distance` for more info:
-/// https://github.com/instant-labs/instant-distance
-pub type Graph = HNSW<Value, String>;
-
-/// A struct that represents the configuration of a graph. This is
-/// how the graph will be built and stored in the graph database.
-///
-/// `ef_construction` is the number of neighbors that will be used to
-/// build the graph. `ef_search` is the number of neighbors that will
-/// be used to search the graph. The higher the number of this parameters,
-/// the more accurate the graph will be but the slower it will be.
+/// Index graph configuration.
+/// Note that for EF parameters, the higher the number of this parameters,
+/// the more accurate the graph will be but the slower it will be to build.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GraphConfig {
+    /// The name of the graph. Also used to identify the
+    /// graph in the graph database.
     pub name: String,
+    /// The number of neighbors that will be calculated
+    /// during the construction of the graph.
     pub ef_construction: usize,
+    /// The number of neighbors that will be considered
+    /// when searching the nearest neighbors in the graph.
     pub ef_search: usize,
+    /// Optional hashmap of data that will be used to filter
+    /// the values used to build the graph. Works like a WHERE
+    /// clause in SQL with an AND operator. Only values that
+    /// match all of the filter will be used to build the graph.
     pub filter: Option<Data>,
 }
 
-/// A struct that represents the data that will be stored in the graph
-/// database as a value. It contains the graph itself and the
-/// configuration of the graph.
+/// The value that will be stored in the graph database.
 #[derive(Serialize, Deserialize)]
 pub struct GraphStore {
-    pub graph: Graph,
-    pub config: GraphConfig,
+    graph: Graph,
+    config: GraphConfig,
 }
 
-/// A struct that represents the configuration of the database.
-/// - `path`: The path where the database will be persisted.
-/// - `dimension`: The dimension of the embeddings that will be stored.
-///     This needs to be set by the `SAHOMEDB_DIMENSION` environment
-///     variable and it is used to validate that the embeddings have the
-///     correct dimension.
+/// The configuration of the database.
 pub struct Config {
     pub path: String,
+    /// The dimension of the embeddings that will be stored.
+    /// This is used to validate that the embeddings supplied
+    /// have the correct dimension.
     pub dimension: usize,
 }
 
-/// A struct that represents the database. It contains the configuration
-/// as well as the key-value store and the graph database. The key-value
-/// store is used to store the `Value` and the graph database is used to
-/// store the serialized graphs. This graph then can be deserialized and
-/// queried to get the nearest neighbors of a given embedding.
+/// The vector database. It contains the configuration as well as the value
+/// database and the graph database. The value database is used to store the
+/// `Value` and the graph database is used to store the `GraphStore`.
 pub struct Database {
     pub config: Config,
     value_db: DB,
@@ -68,9 +63,8 @@ pub struct Database {
 }
 
 impl Database {
-    /// Creates a new database with the given configuration. The value
-    /// database will be stored in `/<path>/values` and the graph database
-    /// will be stored in `/<path>/graphs`.
+    /// database will be persisted in `/<path>/values` and the graph
+    /// database will be persisted in `/<path>/graphs`.
     pub fn new(config: Config) -> Database {
         let value_db = sled::open(format!("{}/values", config.path)).unwrap();
         let graph_db = sled::open(format!("{}/graphs", config.path)).unwrap();
@@ -116,9 +110,9 @@ impl Database {
     /// graph from the key-values. The graph will be serialized and stored
     /// in the graph database.
     ///
-    /// Unfortunatelly, the graph doesn't automatically update when a value
-    /// is added or deleted. This means that a value is added or deleted,
-    /// the graph needs to be recreated.
+    /// Once built, the values used to build the graph is persisted inside
+    /// of the graph like a snapshot. This means that when a value is added
+    /// or deleted, the graph needs to be recreated to reflect the changes.
     pub fn create_graph(&self, config: GraphConfig) -> Result<(), Error> {
         let mut keys: Vec<String> = Vec::new();
         let mut values: Vec<Value> = Vec::new();
@@ -261,3 +255,14 @@ fn filter_data_match(data: &Data, filter: &Data) -> bool {
 
     true
 }
+
+// Type aliases for readability.
+type Error = &'static str;
+type Data = HashMap<String, String>;
+type Embedding = Vec<f32>;
+
+/// A type alias for the HNSW (Hierarchical Navigable Small World)
+/// graph. This is the graph that will be used to query the embedding.
+/// Check the documentation of `instant_distance` for more info:
+/// https://github.com/instant-labs/instant-distance
+type Graph = HNSW<Value, String>;
