@@ -1,5 +1,8 @@
 use super::*;
 
+/// Input data structure to interact with the index.
+/// * `M` - Any type of metadata for the vector.
+/// * `N` - The vector dimension.
 #[derive(Clone, Copy)]
 pub struct Node<M: Copy, const N: usize> {
     pub key: &'static str,
@@ -7,6 +10,7 @@ pub struct Node<M: Copy, const N: usize> {
     pub metadata: M,
 }
 
+/// Output data structure of the query operation.
 #[derive(Debug)]
 pub struct QueryResult<M: Copy> {
     pub key: &'static str,
@@ -14,17 +18,23 @@ pub struct QueryResult<M: Copy> {
     pub metadata: M,
 }
 
-pub struct Index<M: Copy, const N: usize> {
-    trees: Vec<Tree<N>>,
-    metadata: HashMap<&'static str, M>,
-    vectors: HashMap<&'static str, Vector<N>>,
-    config: IndexConfig,
-}
-
+/// Configuration for the vector index.
 #[derive(Clone, Copy)]
 pub struct IndexConfig {
     pub num_trees: i32,
     pub max_leaf_size: i32,
+}
+
+/// The vector index.
+/// * `M` - Any type of metadata for the vector.
+/// * `N` - The vector dimension.
+pub struct Index<M: Copy, const N: usize> {
+    // For memory efficiency, the trees only store the vector keys.
+    // The vectors and the metadata are stored separately.
+    trees: Vec<Tree<N>>,
+    metadata: HashMap<&'static str, M>,
+    vectors: HashMap<&'static str, Vector<N>>,
+    config: IndexConfig,
 }
 
 impl<M: Copy, const N: usize> Index<M, N> {
@@ -32,6 +42,7 @@ impl<M: Copy, const N: usize> Index<M, N> {
         let mut unique_nodes = vec![];
         let hashes_seen = DashSet::new();
 
+        // Check if the hash key of the vector exists in the set.
         for node in nodes {
             let hash_key = node.vector.to_hashkey();
             if !hashes_seen.contains(&hash_key) {
@@ -52,6 +63,9 @@ impl<M: Copy, const N: usize> Index<M, N> {
         }
     }
 
+    /// Builds a new index from a list of nodes.
+    /// * `nodes` - List of nodes.
+    /// * `config` - Configuration of the index.
     pub fn build(nodes: &Vec<Node<M, N>>, config: &IndexConfig) -> Index<M, N> {
         let nodes = Self::deduplicate(nodes);
 
@@ -100,7 +114,11 @@ impl<M: Copy, const N: usize> Index<M, N> {
         self.vectors.remove(key);
     }
 
+    /// Queries the index for the nearest neighbors of the given vector.
+    /// * `vector` - The vector to query.
+    /// * `n` - The number of candidates to find.
     pub fn query(&self, vector: &Vector<N>, n: i32) -> Vec<QueryResult<M>> {
+        // Query each tree for nearest neighbors.
         let candidates = DashSet::new();
 
         self.trees.iter().for_each(|tree| {

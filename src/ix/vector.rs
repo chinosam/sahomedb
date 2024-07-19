@@ -24,16 +24,16 @@ impl<const N: usize> VectorOps<N> for Vector<N> {
 
     fn subtract_from(&self, vector: &Vector<N>) -> Vector<N> {
         let results = self.iter().zip(vector).map(|(a, b)| b - a);
-        results.collect::<Vec<_>>().try_into().unwrap()
+        results.collect::<Vec<f32>>().try_into().unwrap()
     }
 
     fn average(&self, vector: &Vector<N>) -> Vector<N> {
         let results = self.iter().zip(vector).map(|(a, b)| (a + b) / 2.0);
-        results.collect::<Vec<_>>().try_into().unwrap()
+        results.collect::<Vec<f32>>().try_into().unwrap()
     }
 
     fn to_hashkey(&self) -> HashKey<N> {
         let iter = self.iter().map(|a| a.to_bits());
-        iter.collect::<Vec<_>>().try_into().unwrap()
+        iter.collect::<Vec<u32>>().try_into().unwrap()
     }
 }

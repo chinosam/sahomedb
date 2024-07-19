@@ -1,8 +1,9 @@
 use rand::random;
-use sahomedb::*;
+use sahomedb::index::*;
+use sahomedb::vector::*;
 
 fn main() {
-    let len = 1000;
+    let len = 10000;
     let n = 10;
 
     let nodes = generate_nodes(len);
