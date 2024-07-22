@@ -3,6 +3,16 @@ name = "sahomedb"
 version = "0.1.0-beta.3"
 edition = "2021"
 
+# Information.
+authors = ["Elijah Obs", "Samson"]
+description = "Fast embedded vector database with incremental HNSW indexing."
+homepage = "https://sahome.com/"
+repository = "https://github.com/Sahomey-Technologies/sahomedb"
+
+# Metadata.
+keywords = ["embedded", "vector", "database", "hnsw", "ann"]
+categories = ["database", "algorithms", "embedded"]
+
 [dependencies]
 sled = "0.34.7"
 
