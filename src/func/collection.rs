@@ -360,6 +360,7 @@ impl<D: Copy, const N: usize, const M: usize> Collection<D, N, M> {
         self.count
     }
 
+    /// Returns true if the collection is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }

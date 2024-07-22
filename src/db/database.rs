@@ -113,6 +113,7 @@ impl Database {
         self.count
     }
 
+    /// Returns true if the database is empty.
     pub fn is_empty(&self) -> bool {
         self.count == 0
     }
