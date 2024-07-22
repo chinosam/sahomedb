@@ -51,7 +51,7 @@ fn index_built_nn<const N: usize>(
 
     // Query the index.
     let start = std::time::Instant::now();
-    let result = hnsw.search(&query, n);
+    let result = hnsw.search(query, n);
 
     print!("Index (Built) Nearest: {}", result[0].distance);
     println!(" {:?}μs", start.elapsed().as_micros());
@@ -77,7 +77,7 @@ fn index_insert_nn<const N: usize>(
 
     // Query the index.
     let start = std::time::Instant::now();
-    let result = hnsw.search(&query, n);
+    let result = hnsw.search(query, n);
 
     print!("Index (Insert) Nearest: {}", result[0].distance);
     println!(" {:?}μs", start.elapsed().as_micros());

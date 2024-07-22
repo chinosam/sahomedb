@@ -93,7 +93,7 @@ impl<'a, const M: usize, const N: usize> IndexConstruction<'a, M, N> {
             // Find the correct index to insert at to keep the order.
             let index = self.base_layer[&vec_id]
                 .read()
-                .binary_search_by(|id| ordering(&id))
+                .binary_search_by(ordering)
                 .unwrap_or_else(|error| error);
 
             self.base_layer[&vec_id].write().insert(index, vector_id);
@@ -181,7 +181,7 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
         // each point's layer and insertion order.
 
         let vectors = records
-            .into_iter()
+            .iter()
             .enumerate()
             .map(|(i, item)| (VectorID(i as u32), item.vector))
             .collect::<HashMap<VectorID, Vector<N>>>();
@@ -212,7 +212,7 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
             search_pool,
             top_layer,
             vectors: &vectors,
-            config: &config,
+            config,
         };
 
         // Initialize data for layers.
@@ -236,7 +236,7 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
         }
 
         let data = records
-            .into_iter()
+            .iter()
             .enumerate()
             .map(|(i, item)| (VectorID(i as u32), item.data))
             .collect::<HashMap<VectorID, D>>();
@@ -286,8 +286,8 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
     /// * `record`: New vector record.
     pub fn update(&mut self, id: &VectorID, record: &IndexRecord<D, N>) {
         self.delete_from_layers(id);
-        self.vectors.insert(id.clone(), record.vector);
-        self.data.insert(id.clone(), record.data);
+        self.vectors.insert(*id, record.vector);
+        self.data.insert(*id, record.data);
         self.insert_to_layers(id);
     }
 
@@ -341,7 +341,7 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
             SearchResult { id, distance, data }
         };
 
-        search.iter().map(|candidate| map_result(candidate)).take(n).collect()
+        search.iter().map(map_result).take(n).collect()
     }
 
     /// Inserts a vector ID into the index layers.
@@ -351,7 +351,7 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
         let base_layer = self
             .base_layer
             .par_iter()
-            .map(|node| RwLock::new(node.clone()))
+            .map(|node| RwLock::new(*node))
             .collect::<Vec<_>>();
 
         let top_layer = match self.upper_layers.is_empty() {
@@ -368,14 +368,11 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
         };
 
         // Insert new vector into the contructor.
-        state.insert(&id, &top_layer, &self.upper_layers);
+        state.insert(id, &top_layer, &self.upper_layers);
 
         // Update the base layer with the new state.
-        self.base_layer = state
-            .base_layer
-            .into_par_iter()
-            .map(|node| node.read().clone())
-            .collect();
+        self.base_layer =
+            state.base_layer.into_par_iter().map(|node| *node.read()).collect();
     }
 
     /// Removes a vector ID from all index layers.
