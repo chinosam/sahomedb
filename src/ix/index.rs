@@ -111,7 +111,7 @@ impl<'a, const M: usize, const N: usize> IndexConstruction<'a, M, N> {
 /// * `M`: Maximum neighbors per vector node.
 #[derive(Serialize, Deserialize)]
 pub struct IndexGraph<D, const N: usize, const M: usize> {
-    pub data: Vec<D>,
+    pub data: HashMap<VectorID, D>,
     pub config: IndexConfig,
     vectors: Vec<Vector<N>>,
     base_layer: Vec<BaseNode<M>>,
@@ -133,7 +133,7 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
     pub fn new(config: &IndexConfig) -> Self {
         Self {
             config: *config,
-            data: vec![],
+            data: HashMap::new(),
             vectors: vec![],
             base_layer: vec![],
             upper_layers: vec![],
@@ -259,7 +259,10 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
         // Map the vector ID to the data.
         let mut sorted = output.par_iter().enumerate().collect::<Vec<_>>();
         sorted.sort_unstable_by(|a, b| a.1.cmp(&b.1));
-        let data = sorted.iter().map(|item| data[item.0]).collect();
+
+        // Map the vector ID to the data.
+        let data_iter = sorted.into_iter().map(|i| (*i.1, data[i.0]));
+        let data = HashMap::from_iter(data_iter);
 
         let base_iter = base_layer.into_iter();
         let base_layer = base_iter.map(|node| node.into_inner()).collect();
@@ -303,7 +306,7 @@ impl<D: Copy, const N: usize, const M: usize> IndexGraph<D, N, M> {
         let map_result = |candidate: Candidate| {
             let id = candidate.vector_id.0;
             let distance = candidate.distance.0;
-            let data = self.data[candidate.vector_id.0 as usize].clone();
+            let data = *self.data.get(&candidate.vector_id).unwrap();
             SearchResult { id, distance, data }
         };
 
