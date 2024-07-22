@@ -47,7 +47,7 @@ impl<'a, const M: usize, const N: usize> IndexConstruction<'a, M, N> {
         insertion.ef = self.config.ef_construction;
 
         // Find the first valid vector ID to push.
-        let validator = |i| self.vectors.get(&VectorID(i)) != None;
+        let validator = |i| self.vectors.get(&VectorID(i)).is_some();
         let valid_id = (0..self.vectors.len())
             .into_par_iter()
             .find_first(|i| validator(*i as u32))
@@ -113,8 +113,9 @@ impl<'a, const M: usize, const N: usize> IndexConstruction<'a, M, N> {
 /// * `M`: Maximum neighbors per vector node. Default to 32.
 #[derive(Serialize, Deserialize)]
 pub struct Collection<D, const N: usize, const M: usize = 32> {
+    /// The collection configuration object.
     pub config: Config,
-    // List private fields below.
+    // Private fields below.
     data: HashMap<VectorID, D>,
     vectors: HashMap<VectorID, Vector<N>>,
     slots: Vec<VectorID>,
@@ -357,6 +358,10 @@ impl<D: Copy, const N: usize, const M: usize> Collection<D, N, M> {
     /// Returns the number of vector records in the collection.
     pub fn len(&self) -> usize {
         self.count
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Inserts a vector ID into the index layers.

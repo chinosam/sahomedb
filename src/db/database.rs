@@ -112,4 +112,8 @@ impl Database {
     pub fn len(&self) -> usize {
         self.count
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.count == 0
+    }
 }

@@ -13,6 +13,10 @@ fn main() {
     collection_insert_nn(records, &query, n);
 }
 
+/// Finds the nearest neighbors using brute force.
+/// * `records`: Vector records to search.
+/// * `query`: Vector to search for.
+/// * `n`: Number of nearest neighbors to find.
 fn real_nn<const N: usize>(
     records: &[Record<usize, N>],
     query: &Vector<N>,
@@ -38,6 +42,10 @@ fn real_nn<const N: usize>(
     nearest
 }
 
+/// Finds the nearest neighbors using a built collection.
+/// * `records`: Vector records to build the collection.
+/// * `query`: Vector to search for.
+/// * `n`: Number of nearest neighbors to find.
 fn collection_built_nn<const N: usize>(
     records: &[Record<usize, N>],
     query: &Vector<N>,
@@ -52,7 +60,7 @@ fn collection_built_nn<const N: usize>(
 
     // Search the collection.
     let start = std::time::Instant::now();
-    let result = collection.search(&query, n);
+    let result = collection.search(query, n);
 
     print!("Collection (Built) Nearest: {}", result[0].distance);
     println!(" {:?}μs", start.elapsed().as_micros());
@@ -60,6 +68,10 @@ fn collection_built_nn<const N: usize>(
     result.iter().map(|c| (c.distance, c.id as usize)).collect()
 }
 
+/// Finds the nearest neighbors using a collection with inserts.
+/// * `records`: Vector records to insert into the collection.
+/// * `query`: Vector to search for.
+/// * `n`: Number of nearest neighbors to find.
 fn collection_insert_nn<const N: usize>(
     records: &[Record<usize, N>],
     query: &Vector<N>,
@@ -79,7 +91,7 @@ fn collection_insert_nn<const N: usize>(
 
     // Search the collection.
     let start = std::time::Instant::now();
-    let result = collection.search(&query, n);
+    let result = collection.search(query, n);
 
     print!("Index (Insert) Nearest: {}", result[0].distance);
     println!(" {:?}μs", start.elapsed().as_micros());
