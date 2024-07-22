@@ -1,6 +1,6 @@
 use rand::random;
 use sahomedb::index::*;
-use sahomedb::vector::Vector;
+use sahomedb::vector::*;
 
 fn main() {
     let records = gen_records::<128>(1000);
@@ -45,7 +45,9 @@ fn index_built_nn<const N: usize>(
 ) -> Vec<(f32, usize)> {
     // Build the index.
     let config = IndexConfig::default();
-    let hnsw: IndexGraph<usize, N> = IndexGraph::build(&config, records);
+    let mut hnsw: IndexGraph<usize, N> = IndexGraph::build(&config, records);
+
+    hnsw.delete(&VectorID(0));
 
     // Query the index.
     let start = std::time::Instant::now();
@@ -70,6 +72,8 @@ fn index_insert_nn<const N: usize>(
     for record in records {
         hnsw.insert(record);
     }
+
+    hnsw.delete(&VectorID(0));
 
     // Query the index.
     let start = std::time::Instant::now();
