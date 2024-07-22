@@ -20,13 +20,16 @@ SahomeDB is very flexible for use cases related with vector search. It offers 2 
 ```rust
 // This is a complete, runnable example
 use sahomedb::database::Database;
-use sahomedb::collection::Collection;
+use sahomedb::collection::*;
+use sahomedb::vector::*;
+use rand::random; // Utility
+
 fn main() {
     // Utility functions to generate random vector records.
     let records = gen_records::<128>(100);
 
     // Open the database and create a collection.
-    let mut db = Database::open("data");
+    let mut db = Database::open("db");
     let collection: Collection<usize, 128, 32> =
         db.create_collection("vectors", None, Some(&records));
 
@@ -35,6 +38,28 @@ fn main() {
     let result = collection.search(&query, 5);
 
     println!("Nearest neighbor ID: {}", result[0].id);
+}
+
+fn gen_records<const N: usize>(len: usize) -> Vec<Record<usize, N>> {
+    let mut records = Vec::with_capacity(len);
+
+    for _ in 0..len {
+        let vector = gen_vector::<N>();
+        let data = random::<usize>();
+        records.push(Record { vector, data });
+    }
+
+    records
+}
+
+fn gen_vector<const N: usize>() -> Vector<N> {
+    let mut vec = [0.0; N];
+
+    for float in vec.iter_mut() {
+        *float = random::<f32>();
+    }
+
+    Vector(vec)
 }
 ```
 
