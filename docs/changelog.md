@@ -9,7 +9,7 @@
 
 ### Contributors
 
-- @edwinkys
+- @elijahobs
 
 ### Full Changelog
 
