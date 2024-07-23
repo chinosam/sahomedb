@@ -1,5 +1,4 @@
-![Sahome](https://i.postimg.cc/X7rGVsBb/banner.png)
-
+<img src="https://i.postimg.cc/X7rGVsBb/banner.png" alt="Sahome" width="50">
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](https://opensource.org/licenses/Apache-2.0) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?style=for-the-badge)](/docs/code_of_conduct.md) [![Discord](https://img.shields.io/discord/1182432298382131200?logo=discord&logoColor=%23ffffff&label=Discord&style=for-the-badge)](https://discord.gg/bDhQrkqNdsP4)
 
 # 👋 Meet SahomeDB
