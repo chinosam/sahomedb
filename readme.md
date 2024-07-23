@@ -2,13 +2,13 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](https://opensource.org/licenses/Apache-2.0) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?style=for-the-badge)](/docs/code_of_conduct.md) [![Discord](https://img.shields.io/discord/1182432298382131200?logo=discord&logoColor=%23ffffff&label=Discord&style=for-the-badge)](https://discord.gg/bDhQrkqNdsP4)
 
-# 👋 Intro  to SahomeDB
+# 👋 Meet SahomeDB
 
 SahomeDB is an **embeddable**, **efficient**, and **easy to use** vector database. It is designed to be used as a library and embedded inside your AI application. It is written in Rust and uses [Sled](https://docs.rs/sled) as its persistence storage engine to save vector collections to the disk.
 
 SahomeDB implements **HNSW** (Hierachical Navigable Small World) as its indexing algorithm. It is a state-of-the-art algorithm that is used by many vector databases. It is fast, memory efficient, and it scales well to large datasets.
 
-# 🤔 Why SahomeDB?
+## Why SahomeDB?
 
 SahomeDB is very flexible for use cases related with vector search such as using RAG (Retrieval-Augmented Generation) method with an LLM to generate a context-aware output. SahomeDB offers 2 major features that make it stand out from other vector databases or libraries:
 
@@ -81,8 +81,10 @@ cargo bench
 
 We welcome contributions from the community. Please see [contributing.md](/docs/contributing.md) for more information.
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This project is still in the early stages of development. We are actively working on it and we expect the API and functionality to change. We do not recommend using this in production yet.
+
+## Code of Conduct
 
 We are committed to creating a welcoming community. Any participant in our project is expected to act respectfully and to follow the [Code of Conduct](/docs/code_of_conduct.md).
