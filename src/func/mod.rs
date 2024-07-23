@@ -1,5 +1,8 @@
 /// The collection of vectors and their data.
 pub mod collection;
+/// Error types for the database.
+pub mod err;
+
 /// Types for the vectors.
 pub mod vector;
 
