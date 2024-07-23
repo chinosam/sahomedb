@@ -136,8 +136,8 @@ impl<D: Copy, const N: usize, const M: usize> Collection<D, N, M> {
     // Primary methods.
 
     /// Creates an empty collection with the given configuration.
-    pub fn new(config: &Config) -> Result<Self, Box<dyn Error>> {
-        Ok(Self {
+    pub fn new(config: &Config) -> Self {
+        Self {
             config: *config,
             count: 0,
             data: HashMap::new(),
@@ -145,7 +145,7 @@ impl<D: Copy, const N: usize, const M: usize> Collection<D, N, M> {
             slots: vec![],
             base_layer: vec![],
             upper_layers: vec![],
-        })
+        }
     }
 
     /// Builds the collection index from vector records.
@@ -156,7 +156,7 @@ impl<D: Copy, const N: usize, const M: usize> Collection<D, N, M> {
         records: &[Record<D, N>],
     ) -> Result<Self, Box<dyn Error>> {
         if records.is_empty() {
-            return Self::new(config);
+            return Ok(Self::new(config));
         }
 
         // Find the number of layers.

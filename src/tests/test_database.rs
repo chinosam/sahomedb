@@ -32,10 +32,8 @@ fn save_collection_new() {
 
     // Create a collection from scratch.
     let config = Config::default();
-    let mut collection: Collection<usize, 128, 32> =
-        Collection::new(&config).unwrap();
+    let mut collection: Collection<usize, 128, 32> = Collection::new(&config);
     collection.insert(gen_records(1).first().unwrap()).unwrap();
-
     db.save_collection("new", &collection).unwrap();
     assert_eq!(collection.len(), 1);
     assert_eq!(db.len(), 1);
