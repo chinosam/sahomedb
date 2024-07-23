@@ -314,7 +314,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "sahomedb"
-version = "0.1.0-beta.3"
+version = "0.1.0-beta.4"
 dependencies = [
  "bincode",
  "ordered-float",

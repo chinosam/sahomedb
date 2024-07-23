@@ -8,7 +8,7 @@ SahomeDB is an embeddable, efficient, and easy to use vector database. It is des
 
 SahomeDB implements HNSW as its indexing algorithm. It is a state-of-the-art algorithm that is used by many vector databases. It is fast, memory efficient, and it scales well to large datasets.
 
-### Why SahomeDB?
+**Why SahomeDB?**
 
 SahomeDB is very flexible for use cases related with vector search. It offers 2 major features that make it stand out from other embeddable vector databases or libraries:
 
