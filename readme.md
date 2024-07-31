@@ -1,28 +1,41 @@
 ![SahomeDB Use Case](https://i.postimg.cc/SR0MJRFF/sahomedb.png)
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](https://opensource.org/licenses/Apache-2.0) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?style=for-the-badge)](/docs/code_of_conduct.md) [![Discord](https://img.shields.io/discord/1182432298382131200?logo=discord&logoColor=%23ffffff&label=Discord&style=for-the-badge)](https://discord.gg/bDhQrkqNdsP4)
+[![Crates.io](https://img.shields.io/crates/d/sahomedb?style=for-the-badge&label=Crates.io&color=%23f43f5e)](https://crates.io/crates/sahomedb)
+
 
 # 👋 Meet SahomeDB
 
-SahomeDB is an **embeddable**, **efficient**, and **easy to use** vector database. It is designed to be used as a library and embedded inside your AI application. It is written in Rust and uses [Sled](https://docs.rs/sled) as its persistence storage engine to save vector collections to the disk.
+SahomeDB is a SQLite-inspired **lightweight** and **easy to use** embedded vector database. It is designed to be embedded directly inside your AI application. It is written in Rust and uses [Sled](https://docs.rs/sled) as its persistence storage engine to save vector collections to the disk.
 
-SahomeDB implements **HNSW** (Hierachical Navigable Small World) as its indexing algorithm. It is a state-of-the-art algorithm that is used by many vector databases. It is fast, memory efficient, and it scales well to large datasets.
+SahomeDB implements **HNSW** (Hierachical Navigable Small World) as its indexing algorithm. It is a state-of-the-art algorithm that is used by many vector databases. It is fast and scales well to large datasets.
 
 ## Why SahomeDB?
 
-SahomeDB is very flexible for use cases related with vector search such as using RAG (Retrieval-Augmented Generation) method with an LLM to generate a context-aware output. SahomeDB offers 2 major features that make it stand out from other vector databases or libraries:
+SahomeDB is very flexible for use cases related with vector search such as using RAG (Retrieval-Augmented Generation) method with an LLM to generate a context-aware output. These are some of the reasons why you might want to use SahomeDB:
 
-- **Incremental vector operations**: SahomeDB allows you to add, remove, or modify vectors from the collections without having to rebuild their indexes. This allows for a more flexible and efficient approach on storing your vector data.
-- **Flexible persistence options**: You can choose to persist the vector collection to the disk or to keep it in memory. By default, whenever you use a collection, it will be loaded to the memory to ensure that the search performance is high.
+⭐️ **Embedded database**: SahomeDB doesn't require you to set up a separate server and manage it. You can embed it directly into your application and use its simple API like a regular library.
 
-🚀 Quickstart
+⭐️ **Optional persistence**: You can choose to persist the vector collection to the disk or keep it in memory. By default, whenever you use a collection, it will be loaded to the memory to ensure that the search performance is high.
 
-This is a code snippet that you can use as a reference to get started with SahomeDB. In short, use `Collection` to store your vector records or search similar vector and use `Database` to persist a vector collection to the disk.
+⭐️ **Incremental operations**: SahomeDB allows you to add, remove, or modify vectors from collections without having to rebuild indexes. This allows for a more flexible and efficient approach on storing your vector data.
+
+⭐ **Flexible schema**: Along with the vectors, you can store additional metadata for each vector. This is useful for storing information about the vectors such as the original text, image URL, or any other data that you want to associate with the vectors.
+
+ 🚀 Quickstart with Rust
+
+To get started with SahomeDB in Rust, you need to add `sahomedb` to your `Cargo.toml`.You can do so by running the command below which will add the latest version of SahomeDB to your project.
+
+```bash
+cargo add sahomedb
+```
+
+After that, you can use the code snippet below as a reference to get started with SahomeDB. In short, use `Collection` to store your vector records or search similar vector and use `Database` to persist a vector collection to the disk.
+
+In short, use `Collection` to store your vector records or search similar vector and use `Database` to persist a vector collection to the disk.
 
 ```rust
-use sahomedb::collection::*;
-use sahomedb::database::Database;
-use sahomedb::vector::*;
+use sahomedb::prelude::*;
 
 fn main() {
     // Vector dimension must be uniform.
@@ -42,6 +55,29 @@ fn main() {
     println!("Nearest ID: {}", result[0].id);
 }
 ```
+## Dealing with Metadata
+
+In SahomeDB, you can store additional metadata for each vector which is useful to associate the vectors with other data. The code snippet below shows how to insert the `Metadata` to the `Record` or extract it.
+
+```rust
+use sahomedb::prelude::*;
+
+fn main() {
+    // Inserting a metadata value into a record.
+    let data: &str = "This is an example.";
+    let vector = Vector::random(128);
+    let record = Record::new(&vector, &data.into());
+
+    // Extracting the metadata value.
+    let metadata = record.data.clone();
+    let data = match metadata {
+        Metadata::Text(value) => value,
+        _ => panic!("Data is not a text."),
+    };
+
+    println!("{}", data);
+}
+```
 
 # 🎯 Benchmarks
 
@@ -57,13 +93,6 @@ cargo bench
 
 ## Memory Usage
 
-SahomeDB implements HNSW algorithm which is known to be a memory hog compared to other flat indexing algorithms. We decided to use HNSW because it is fast and scales well to large datasets of vectors with large dimension.
-
-Currently, we don't have any plan to change this indexing algorithm since we are currently focusing on the functionality and the interoperability of SahomeDB with other libraries in different programming languages.
-
-We might consider adding more indexing algorithms in the future to make SahomeDB more flexible and to cater to different use cases.
-
-If you are curious about the memory usage of SahomeDB, you can use the following command to run the memory usage measurement:
 
 ```bash
 cargo run --example measure-memory
@@ -73,12 +102,6 @@ cargo run --example measure-memory
 
 Even though the results may vary depending on the hardware and the dataset, we want to give you a quick idea of the performance of SahomeDB. Here are some quick results from the benchmarks:
 
-- **10,000 vectors with 128 dimensions**
-  - Search time: 0.15 ms
-  - Memory usage: 6 MB
-- **1,000,000 vectors with 128 dimensions**
-  - Search time: 1.5 ms
-  - Memory usage: 600 MB
 
 These results are from a machine with an Apple M2 CPU and 16 GB of RAM. The dataset used for the benchmarks is a random dataset generated by the `Record::many_random` function or SIFT datasets with additional random `usize` as its metadata.
 
