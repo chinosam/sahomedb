@@ -1,3 +1,4 @@
+#![allow(clippy::needless_doctest_main)]
 #![warn(missing_docs)]
 #![doc = include_str!("../readme.md")]
 #![doc(html_favicon_url = "https://i.postimg.cc/W3T230zk/favicon.png")]

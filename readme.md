@@ -20,7 +20,6 @@ SahomeDB is very flexible for use cases related with vector search such as using
 This is a code snippet that you can use as a reference to get started with SahomeDB. In short, use `Collection` to store your vector records or search similar vector and use `Database` to persist a vector collection to the disk.
 
 ```rust
-// This is a complete, runnable example
 use sahomedb::collection::*;
 use sahomedb::database::Database;
 use sahomedb::vector::*;
