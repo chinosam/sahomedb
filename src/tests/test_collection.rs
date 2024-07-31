@@ -16,6 +16,7 @@ fn insert() {
     let records = Record::many_random(DIMENSION, LEN);
     let mut collection = create_collection(&records);
 
+    // Create a new record to insert.
     let new_record = Record::random(DIMENSION);
     collection.insert(&new_record).unwrap();
 

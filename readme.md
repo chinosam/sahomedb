@@ -35,23 +35,12 @@ fn main() {
 
     // Open the database and create a collection.
     let mut db = Database::open("data/readme").unwrap();
-    let collection: Collection<usize, 128, 32> =
+    let collection =
         db.create_collection("vectors", None, Some(&records)).unwrap();
 
     // Search for the nearest neighbors.
     let result = collection.search(&query, 5).unwrap();
-
     println!("Nearest ID: {}", result[0].id);
-}
-
-fn gen_vector<const N: usize>() -> Vector<N> {
-    let mut vec = [0.0; N];
-
-    for float in vec.iter_mut() {
-        *float = random::<f32>();
-    }
-
-    Vector(vec)
 }
 ```
 

@@ -12,7 +12,7 @@ pub struct Config {
 }
 
 impl Default for Config {
-    /// Default configuration for the HNSW collection graph.
+    /// Default configuration for the collection index.
     /// * `ef_construction`: 40
     /// * `ef_search`: 15
     /// * `ml`: 0.3
@@ -107,9 +107,6 @@ impl<'a> IndexConstruction<'a> {
 }
 
 /// The collection of vector records with HNSW indexing.
-/// * `D`: Data associated with the vector.
-/// * `N`: Vector dimension.
-/// * `M`: Maximum neighbors per vector node. Default to 32.
 #[derive(Serialize, Deserialize)]
 pub struct Collection {
     /// The collection configuration object.
@@ -181,6 +178,7 @@ impl Collection {
         }
 
         // Find the number of layers.
+
         let mut len = records.len();
         let mut layers = Vec::new();
 
@@ -218,6 +216,7 @@ impl Collection {
         // This helps us allocate memory capacity for each
         // layer in advance, and also helps enable batch
         // insertion of points.
+
         let mut ranges = Vec::with_capacity(top_layer.0);
         for (i, (size, cumulative)) in layers.into_iter().enumerate() {
             let start = cumulative - size;
@@ -244,6 +243,7 @@ impl Collection {
         };
 
         // Initialize data for layers.
+
         for (layer, range) in ranges {
             let end = range.end;
 
@@ -307,7 +307,7 @@ impl Collection {
         }
 
         // Create a new vector ID using the next available slot.
-        let id = VectorID(self.slots.len() as u32);
+        let id: VectorID = self.slots.len().into();
 
         // Insert the new vector and data.
         self.vectors.insert(id, record.vector.clone());
@@ -316,6 +316,7 @@ impl Collection {
         // Add new vector id to the slots.
         self.slots.push(id);
 
+        // Update the collection count.
         self.count += 1;
 
         // This operation is last because it depends on
@@ -483,7 +484,7 @@ impl Collection {
 
     /// Returns true if the collection is empty.
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.count == 0
     }
 
     /// Checks if the collection contains a vector ID.
@@ -519,8 +520,8 @@ impl Collection {
         state.insert(id, &top_layer, &self.upper_layers);
 
         // Update the base layer with the new state.
-        self.base_layer =
-            state.base_layer.into_par_iter().map(|node| *node.read()).collect();
+        let iter = state.base_layer.into_par_iter();
+        self.base_layer = iter.map(|node| *node.read()).collect();
     }
 
     /// Removes a vector ID from all index layers.
@@ -550,8 +551,6 @@ impl Collection {
 }
 
 /// A record containing a vector and its associated data.
-/// * `D`: Data type associated with the vector.
-/// * `N`: Vector dimension. Should be equal to the collection's.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Record {
     /// The vector embedding.
@@ -583,7 +582,6 @@ impl Record {
 }
 
 /// The collection nearest neighbor search result.
-/// * `D`: Data associated with the vector.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SearchResult {
     /// Vector ID.
