@@ -1,3 +1,18 @@
+# v0.2.1
+
+### What's Changed
+
+- `Metadata` enum can now be accessed publicly using `sahomedb::metadata::Metadata`. This allows users to use `match` statements to extract the data from it.
+- Added a `prelude` module that re-exports the most commonly used types and traits. This makes it easier to use the library by importing the prelude module by `use sahomedb::prelude::*`.
+
+### Contributors
+
+- @elijahobs
+
+### Full Changelog
+
+https://github.com/Sahomey-Technologies/sahomedb/compare/v0.2.0...v0.2.1
+
 # v0.2.0
 
 ### What's Changed
