@@ -5,7 +5,7 @@ use sahomedb::collection::{Collection, Config};
 use sahomedb::vector::Vector;
 use utils::*;
 
-fn build_collection(path: &str) -> Collection<usize> {
+fn build_collection(path: &str) -> Collection {
     let records = get_records(path).unwrap();
     let config = Config::default();
     Collection::build(&config, &records).unwrap()

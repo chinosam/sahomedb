@@ -111,11 +111,11 @@ impl<'a> IndexConstruction<'a> {
 /// * `N`: Vector dimension.
 /// * `M`: Maximum neighbors per vector node. Default to 32.
 #[derive(Serialize, Deserialize)]
-pub struct Collection<D> {
+pub struct Collection {
     /// The collection configuration object.
     pub config: Config,
     // Private fields below.
-    data: HashMap<VectorID, D>,
+    data: HashMap<VectorID, Metadata>,
     vectors: HashMap<VectorID, Vector>,
     slots: Vec<VectorID>,
     base_layer: Vec<BaseNode>,
@@ -125,14 +125,14 @@ pub struct Collection<D> {
     dimension: usize,
 }
 
-impl<D> Index<&VectorID> for Collection<D> {
+impl Index<&VectorID> for Collection {
     type Output = Vector;
     fn index(&self, index: &VectorID) -> &Self::Output {
         &self.vectors[index]
     }
 }
 
-impl<D: Copy> Collection<D> {
+impl Collection {
     /// Creates an empty collection with the given configuration.
     pub fn new(config: &Config) -> Self {
         Self {
@@ -152,7 +152,7 @@ impl<D: Copy> Collection<D> {
     /// * `records`: List of vectors to build the index from.
     pub fn build(
         config: &Config,
-        records: &[Record<D>],
+        records: &[Record],
     ) -> Result<Self, Box<dyn Error>> {
         if records.is_empty() {
             return Ok(Self::new(config));
@@ -171,7 +171,7 @@ impl<D: Copy> Collection<D> {
 
         // Ensure that the vector dimension is consistent.
         let dimension = records[0].vector.len();
-        if records.iter().any(|i| i.vector.len() != dimension) {
+        if records.par_iter().any(|i| i.vector.len() != dimension) {
             let message = format!(
                 "The vector dimension is inconsistent. Expected: {}.",
                 dimension
@@ -209,7 +209,7 @@ impl<D: Copy> Collection<D> {
         // each point's layer and insertion order.
 
         let vectors = records
-            .iter()
+            .par_iter()
             .enumerate()
             .map(|(i, item)| (VectorID(i as u32), item.vector.clone()))
             .collect::<HashMap<VectorID, Vector>>();
@@ -266,8 +266,9 @@ impl<D: Copy> Collection<D> {
         let data = records
             .iter()
             .enumerate()
-            .map(|(i, item)| (VectorID(i as u32), item.data))
-            .collect::<HashMap<VectorID, D>>();
+            .map(|(i, item)| (VectorID(i as u32), item.data.clone()))
+            .collect();
+
         // Unwrap the base nodes for the base layer.
         let base_iter = base_layer.into_par_iter();
         let base_layer = base_iter.map(|node| node.into_inner()).collect();
@@ -289,7 +290,7 @@ impl<D: Copy> Collection<D> {
 
     /// Inserts a vector record into the collection.
     /// * `record`: Vector record to insert.
-    pub fn insert(&mut self, record: &Record<D>) -> Result<(), Box<dyn Error>> {
+    pub fn insert(&mut self, record: &Record) -> Result<(), Box<dyn Error>> {
         // Ensure the number of records is within the limit.
         if self.slots.len() == u32::MAX as usize {
             return Err(err::COLLECTION_LIMIT.into());
@@ -313,7 +314,7 @@ impl<D: Copy> Collection<D> {
 
         // Insert the new vector and data.
         self.vectors.insert(id, record.vector.clone());
-        self.data.insert(id, record.data);
+        self.data.insert(id, record.data.clone());
 
         // Add new vector id to the slots.
         self.slots.push(id);
@@ -354,7 +355,7 @@ impl<D: Copy> Collection<D> {
     pub fn update(
         &mut self,
         id: &VectorID,
-        record: &Record<D>,
+        record: &Record,
     ) -> Result<(), Box<dyn Error>> {
         if !self.contains(id) {
             return Err(err::RECORD_NOT_FOUND.into());
@@ -365,7 +366,7 @@ impl<D: Copy> Collection<D> {
 
         // Insert the updated vector and data.
         self.vectors.insert(*id, record.vector.clone());
-        self.data.insert(*id, record.data);
+        self.data.insert(*id, record.data.clone());
         self.insert_to_layers(id);
 
         Ok(())
@@ -373,13 +374,13 @@ impl<D: Copy> Collection<D> {
 
     /// Returns the vector record associated with the ID.
     /// * `id`: Vector ID to retrieve.
-    pub fn get(&self, id: &VectorID) -> Result<Record<D>, Box<dyn Error>> {
+    pub fn get(&self, id: &VectorID) -> Result<Record, Box<dyn Error>> {
         if !self.contains(id) {
             return Err(err::RECORD_NOT_FOUND.into());
         }
 
         let vector = self.vectors[id].clone();
-        let data = self.data[id];
+        let data = self.data[id].clone();
         Ok(Record { vector, data })
     }
 
@@ -390,7 +391,7 @@ impl<D: Copy> Collection<D> {
         &self,
         vector: &Vector,
         n: usize,
-    ) -> Result<Vec<SearchResult<D>>, Box<dyn Error>> {
+    ) -> Result<Vec<SearchResult>, Box<dyn Error>> {
         let mut search = Search::default();
 
         if self.vectors.is_empty() {
@@ -426,7 +427,7 @@ impl<D: Copy> Collection<D> {
         let map_result = |candidate: Candidate| {
             let id = candidate.vector_id.0;
             let distance = candidate.distance.0;
-            let data = self.data[&candidate.vector_id];
+            let data = self.data[&candidate.vector_id].clone();
             SearchResult { id, distance, data }
         };
 
@@ -440,14 +441,14 @@ impl<D: Copy> Collection<D> {
         &self,
         vector: &Vector,
         n: usize,
-    ) -> Result<Vec<SearchResult<D>>, Box<dyn Error>> {
+    ) -> Result<Vec<SearchResult>, Box<dyn Error>> {
         let mut nearest = Vec::with_capacity(self.vectors.len());
 
         // Calculate the distance between the query and each record.
         // Then, create a search result for each record.
         for (id, vec) in self.vectors.iter() {
             let distance = vector.distance(vec);
-            let data = self.data[id];
+            let data = self.data[id].clone();
             let res = SearchResult { id: id.0, distance, data };
             nearest.push(res);
         }
@@ -514,7 +515,7 @@ impl<D: Copy> Collection<D> {
     fn delete_from_layers(&mut self, id: &VectorID) {
         // Remove the vector from the base layer.
         let base_node = &mut self.base_layer[id.0 as usize];
-        let index = base_node.iter().position(|x| *x == *id);
+        let index = base_node.par_iter().position_first(|x| *x == *id);
         if let Some(index) = index {
             base_node.set(index, &INVALID);
         }
@@ -527,7 +528,7 @@ impl<D: Copy> Collection<D> {
             };
 
             let node = &mut upper_layer[id.0 as usize];
-            let index = node.0.iter().position(|x| *x == *id);
+            let index = node.0.par_iter().position_first(|x| *x == *id);
 
             if let Some(index) = index {
                 node.set(index, &INVALID);
@@ -540,21 +541,21 @@ impl<D: Copy> Collection<D> {
 /// * `D`: Data type associated with the vector.
 /// * `N`: Vector dimension. Should be equal to the collection's.
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Record<D> {
+pub struct Record {
     /// The vector embedding.
     pub vector: Vector,
     /// Data associated with the vector.
-    pub data: D,
+    pub data: Metadata,
 }
 
 /// The collection nearest neighbor search result.
 /// * `D`: Data associated with the vector.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SearchResult<D> {
+pub struct SearchResult {
     /// Vector ID.
     pub id: u32,
     /// Distance between the query to the collection vector.
     pub distance: f32,
     /// Data associated with the vector.
-    pub data: D,
+    pub data: Metadata,
 }

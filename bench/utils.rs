@@ -1,6 +1,7 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 use curl::easy::Easy;
 use flate2::read::GzDecoder;
+use rayon::iter::*;
 use sahomedb::collection::Record;
 use sahomedb::vector::Vector;
 use std::error::Error;
@@ -98,12 +99,15 @@ pub fn read_vectors(path: &str) -> Result<Vec<Vec<f32>>, Box<dyn Error>> {
 
 /// Reads and converts the vectors from the dataset into records.
 /// * `path`: Path to the dataset file.
-pub fn get_records(path: &str) -> Result<Vec<Record<usize>>, Box<dyn Error>> {
+pub fn get_records(path: &str) -> Result<Vec<Record>, Box<dyn Error>> {
     // Create records where the ID is the index.
     let records = read_vectors(path)?
-        .iter()
+        .par_iter()
         .enumerate()
-        .map(|(id, vec)| Record { vector: Vector(vec.clone()), data: id })
+        .map(|(id, vec)| Record {
+            vector: Vector(vec.clone()),
+            data: id.into(),
+        })
         .collect();
 
     Ok(records)
