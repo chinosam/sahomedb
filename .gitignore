@@ -1,10 +1,14 @@
 # SahomeDB.
 data
 
-
 # Rust stuff.
 debug
 target
+
+# Python stuff.
+__pycache__
+.pytest_cache
+.venv
 
 # Benchmarking.
 *.ivecs
@@ -12,7 +16,7 @@ target
 
 # Misc.
 .vscode
-.DS_Store
+.ds_store
 
 # Environment variables.
 .env
